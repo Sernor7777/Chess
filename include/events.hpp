@@ -1,5 +1,6 @@
 #pragma once
 
 #include <SFML/Window.hpp>
+#include "board.hpp"
 
-void processEvents(sf::Window& window);
+void processEvents(sf::RenderWindow& window, Board& board);

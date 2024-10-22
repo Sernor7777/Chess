@@ -1,8 +1,9 @@
 #include "events.hpp"
 
-void processEvents(sf::Window& window)
+void processEvents(sf::RenderWindow& window, Board& board)
 {
-    for (auto event = sf::Event(); window.pollEvent(event);)
+    sf::Event event;
+    while (window.pollEvent(event))
     {
         if (event.type == sf::Event::Closed)
         {
@@ -15,5 +16,7 @@ void processEvents(sf::Window& window)
                 window.close();
             }
         }
+        board.handleInput(window, event);
     }
 }
+

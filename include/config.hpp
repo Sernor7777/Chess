@@ -5,5 +5,5 @@
 namespace config
 {
     const std::string assetsPath = ASSETS_DIR;
-    const float SQUARE_SIZE = 50.f;
+    const float SQUARE_SIZE = 60.f;
 }
