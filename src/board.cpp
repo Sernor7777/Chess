@@ -12,23 +12,6 @@ Board::Board(TextureLoader& textureLoader) : textureLoader(textureLoader)
 void Board::setupBoard()
 {
     readFEN("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR");
-
-    // sf::Texture texture;
-    // for (const std::string& piece : pieceTypes)
-    // {
-    //     if (!texture.loadFromFile(config::assetsPath + "/images/" + piece + ".png"))
-    //     {
-    //         std::runtime_error("Failed to load texture!");
-    //     }
-    //     pieceTextures[piece] = texture;
-    //     pieceTextures[piece].setSmooth(true);
-    //     pieceSprites[piece].setTexture(pieceTextures[piece]);
-    //     pieceSprites[piece].setScale(1 / 3.f, 1 / 3.f);
-    //     //sf::Vector2f scale = pieceSprites[piece].getScale();
-    //     //std::cout << "Scale: x = " << scale.x << ", y = " << scale.y << std::endl;
-
-
-    // }
 }
 
 void Board::readFEN(const std::string& FEN)
@@ -70,7 +53,6 @@ void Board::readFEN(const std::string& FEN)
             {
                 board[rank][file] = std::make_unique<King>(std::isupper(c) ? true : false, rank, file, textureLoader);
             }
-
             file++;
         }
         else if (std::isalnum(c))
@@ -82,7 +64,6 @@ void Board::readFEN(const std::string& FEN)
             file = 0;
             rank++;
         }
-
     }
 }
 
@@ -101,9 +82,6 @@ void Board::displayBoard(sf::RenderWindow& window, TextureLoader& textureLoader)
             if (piece != nullptr)
             {
                 window.draw(piece->getSprite());
-                //pieceSprites[pieceNames[board[rank][file]]].setPosition(50 + (file * config::SQUARE_SIZE), 88 + (rank * config::SQUARE_SIZE));
-                //window.draw(pieceSprites[pieceNames[board[rank][file]]]);
-                // drawHitbox(window, pieceSprites[pieceNames[board[rank][file]]]);
             }
         }
     }
@@ -116,14 +94,15 @@ void Board::handleInput(sf::RenderWindow& window, sf::Event& event)
         sf::Vector2i mousePosition = sf::Mouse::getPosition(window);
         for (auto& row : board) {
             for (auto& piece : row) {
-                if (piece != nullptr)
+                if (piece == nullptr)
                 {
-                    sf::FloatRect boundingBox = piece->getSprite().getGlobalBounds();
-                    if (boundingBox.contains(static_cast<float>(mousePosition.x), static_cast<float>(mousePosition.y)))
-                    {
-                        piece->getSprite().setColor(sf::Color::Red);
-                        std::cout << "oh wow this is called" << '\n';
-                    }
+                    continue;
+                }
+
+                sf::FloatRect boundingBox = piece->getSprite().getGlobalBounds();
+                if (boundingBox.contains(static_cast<float>(mousePosition.x), static_cast<float>(mousePosition.y)))
+                {
+                    piece->getSprite().setColor(sf::Color::Red);
                 }
             }
         }
@@ -132,22 +111,13 @@ void Board::handleInput(sf::RenderWindow& window, sf::Event& event)
 
 void Board::drawHitbox(sf::RenderWindow& window, const sf::Sprite& sprite)
 {
-    // Get the bounding box of the sprite
+    
     sf::FloatRect bounds = sprite.getGlobalBounds();
-
-    // Create a rectangle shape to represent the hitbox
     sf::RectangleShape hitbox(sf::Vector2f(bounds.width, bounds.height));
 
-    // Set the position of the hitbox to match the sprite's position
     hitbox.setPosition(bounds.left, bounds.top);
-
-    // Set a visible outline for the hitbox
     hitbox.setOutlineColor(sf::Color::Red);
     hitbox.setOutlineThickness(1);
-
-    // Make the inside of the hitbox transparent
     hitbox.setFillColor(sf::Color::Transparent);
-
-    // Draw the hitbox to the window
     window.draw(hitbox);
 }

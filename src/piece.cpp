@@ -5,7 +5,7 @@ Pawn::Pawn(bool isWhite, int rank, int file, TextureLoader& textureLoader) : Pie
 {
     sprite.setTexture(textureLoader.getTexture(isWhite ? "wp.png" : "bp.png"));
     sprite.setScale(6 / 15.0, 6 / 15.0);
-    sprite.setPosition(50 + (file * config::SQUARE_SIZE), 48 + (rank * config::SQUARE_SIZE));
+    sprite.setPosition(50 + (file * config::SQUARE_SIZE), (config::WINDOW_HEIGHT - (8 * config::SQUARE_SIZE)) / 2 + (rank * config::SQUARE_SIZE));
 }
 
 sf::Sprite& Pawn::getSprite()
@@ -17,7 +17,7 @@ Rook::Rook(bool isWhite, int rank, int file, TextureLoader& textureLoader) : Pie
 {
     sprite.setTexture(textureLoader.getTexture(isWhite ? "wr.png" : "br.png"));
     sprite.setScale(6 / 15.0, 6 / 15.0);
-    sprite.setPosition(50 + (file * config::SQUARE_SIZE), 48 + (rank * config::SQUARE_SIZE));
+    sprite.setPosition(50 + (file * config::SQUARE_SIZE), (config::WINDOW_HEIGHT - (8 * config::SQUARE_SIZE)) / 2 + (rank * config::SQUARE_SIZE));
 }
 
 sf::Sprite& Rook::getSprite()
@@ -29,7 +29,7 @@ Knight::Knight(bool isWhite, int rank, int file, TextureLoader& textureLoader) :
 {
     sprite.setTexture(textureLoader.getTexture(isWhite ? "wn.png" : "bn.png"));
     sprite.setScale(6 / 15.0, 6 / 15.0);
-    sprite.setPosition(50 + (file * config::SQUARE_SIZE), 48 + (rank * config::SQUARE_SIZE));
+    sprite.setPosition(50 + (file * config::SQUARE_SIZE), (config::WINDOW_HEIGHT - (8 * config::SQUARE_SIZE)) / 2 + (rank * config::SQUARE_SIZE));
 }
 
 sf::Sprite& Knight::getSprite()
@@ -41,7 +41,7 @@ Bishop::Bishop(bool isWhite, int rank, int file, TextureLoader& textureLoader) :
 {
     sprite.setTexture(textureLoader.getTexture(isWhite ? "wb.png" : "bb.png"));
     sprite.setScale(6 / 15.0, 6 / 15.0);
-    sprite.setPosition(50 + (file * config::SQUARE_SIZE), 48 + (rank * config::SQUARE_SIZE));
+    sprite.setPosition(50 + (file * config::SQUARE_SIZE), (config::WINDOW_HEIGHT - (8 * config::SQUARE_SIZE)) / 2 + (rank * config::SQUARE_SIZE));
 }
 
 sf::Sprite& Bishop::getSprite()
@@ -53,7 +53,7 @@ Queen::Queen(bool isWhite, int rank, int file, TextureLoader& textureLoader) : P
 {
     sprite.setTexture(textureLoader.getTexture(isWhite ? "wq.png" : "bq.png"));
     sprite.setScale(6 / 15.0, 6 / 15.0);
-    sprite.setPosition(50 + (file * config::SQUARE_SIZE), 48 + (rank * config::SQUARE_SIZE));
+    sprite.setPosition(50 + (file * config::SQUARE_SIZE), (config::WINDOW_HEIGHT - (8 * config::SQUARE_SIZE)) / 2 + (rank * config::SQUARE_SIZE));
 }
 
 sf::Sprite& Queen::getSprite()
@@ -65,7 +65,7 @@ King::King(bool isWhite, int rank, int file, TextureLoader& textureLoader) : Pie
 {
     sprite.setTexture(textureLoader.getTexture(isWhite ? "wk.png" : "bk.png"));
     sprite.setScale(6 / 15.0, 6 / 15.0);
-    sprite.setPosition(50 + (file * config::SQUARE_SIZE), 48 + (rank * config::SQUARE_SIZE));
+    sprite.setPosition(50 + (file * config::SQUARE_SIZE), (config::WINDOW_HEIGHT - (8 * config::SQUARE_SIZE)) / 2 + (rank * config::SQUARE_SIZE));
 }
 
 sf::Sprite& King::getSprite()

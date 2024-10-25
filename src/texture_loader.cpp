@@ -25,7 +25,7 @@ sf::Texture& TextureLoader::getTexture(const char* textureName)
 {
     auto it = textures.find(textureName);
     if (it == textures.end()) {
-        throw std::runtime_error("Texture not found!");
+        std::runtime_error("Texture not found!");
     }
     return it->second;
 }
