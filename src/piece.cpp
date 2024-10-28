@@ -7,16 +7,6 @@ bool Piece::getColor()
     return isWhite;
 }
 
-void Piece::setDragged(bool dragged)
-{
-    this->dragged = dragged;
-}
-
-bool Piece::isDragged()
-{
-    return dragged;
-}
-
 Pawn::Pawn(bool isWhite, int rank, int file, TextureLoader& textureLoader) : Piece(isWhite, rank, file)
 {
     sprite.setTexture(textureLoader.getTexture(isWhite ? "wp.png" : "bp.png"));
@@ -30,8 +20,9 @@ sf::Sprite& Pawn::getSprite()
 }
 
 std::vector<Move> Pawn::getLegalMoves(Board& board) {
-    std::cout << "getLegalMoves called for Pawn at rank: " << rank << " file: " << file << std::endl; // Debug output
-    if (rank == 6 && isWhite) { // Check for white pawn
+    std::cout << "getLegalMoves called for Pawn at rank: " << rank << " file: " << file << std::endl;
+    if (rank == 6 && isWhite)
+    {
         legalMoves.push_back(Move{ rank, file, rank - 1, file });
     }
     return legalMoves;

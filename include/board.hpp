@@ -34,6 +34,5 @@ private:
     TextureLoader textureLoader;
 
     void setupBoard();
-    // bool verifyValidMove(int startSquare, int endSquare);
     void drawHitbox(sf::RenderWindow& window, const sf::Sprite& sprite);
 };

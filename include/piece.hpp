@@ -7,15 +7,6 @@
 
 class Board;
 
-enum class PieceType {
-    Pawn,
-    Rook,
-    Knight,
-    Bishop,
-    Queen,
-    King
-};
-
 struct Move
 {
     int fromRank;
@@ -30,20 +21,14 @@ public:
     Piece(bool isWhite, int rank, int file) : isWhite(isWhite), rank(rank), file(file) {};
     virtual ~Piece() = default;
 
-    //*virtual*/ PieceType getType(); // = 0;
     virtual std::vector<Move> getLegalMoves(Board& board) = 0;
     //virtual void setSprite(TextureLoader& textureLoader) = 0;
     virtual sf::Sprite& getSprite() = 0;
     bool getColor();
-    void setDragged(bool dragged);
-    bool isDragged();
-
 
 protected:
     std::vector<Move> legalMoves;
     sf::Sprite sprite;
-    // PieceType pieceType;
-    // const int value;
     bool isWhite;
     bool dragged;
     int rank;

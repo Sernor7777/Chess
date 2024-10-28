@@ -114,41 +114,43 @@ void Board::displayBoard(sf::RenderWindow& window, TextureLoader& textureLoader)
     }
 }
 
-void Board::handleInput(sf::RenderWindow& window, sf::Event& event) {
-    if (sf::Mouse::isButtonPressed(sf::Mouse::Left)) {
+void Board::handleInput(sf::RenderWindow& window, sf::Event& event)
+{
+    if (sf::Mouse::isButtonPressed(sf::Mouse::Left))
+    {
         sf::Vector2i mousePosition = sf::Mouse::getPosition(window);
-        for (auto& row : board) {
-            for (auto& piece : row) {
-                if (piece == nullptr) {
+        for (auto& row : board)
+        {
+            for (auto& piece : row)
+            {
+                if (piece == nullptr)
+                {
                     continue;
                 }
 
                 sf::FloatRect boundingBox = piece->getSprite().getGlobalBounds();
-                if (boundingBox.contains(static_cast<float>(mousePosition.x), static_cast<float>(mousePosition.y)) && draggedPiece == nullptr) {
-                    piece->setDragged(true);
+                if (boundingBox.contains(static_cast<float>(mousePosition.x), static_cast<float>(mousePosition.y)) && draggedPiece == nullptr)
+                {
                     draggedPiece = piece.get();
 
-                    // Get legal moves and check if there are any
                     auto legalMoves = draggedPiece->getLegalMoves(*this);
-                    if (!legalMoves.empty()) {
-                        std::cout << legalMoves[0].toRank << '\n'; // Safe access
+                    if (!legalMoves.empty())
+                    {
+                        std::cout << legalMoves[0].toRank << '\n';
                     }
                 }
 
-                // Check if a piece is being dragged before updating its position
-                if (draggedPiece != nullptr) {
-                    draggedPiece->getSprite().setPosition(
-                        static_cast<sf::Vector2f>(mousePosition) -
-                        sf::Vector2f(draggedPiece->getSprite().getGlobalBounds().width / 2,
-                            draggedPiece->getSprite().getGlobalBounds().height / 2)
-                    );
+                if (draggedPiece != nullptr)
+                {
+                    draggedPiece->getSprite().setPosition(static_cast<sf::Vector2f>(mousePosition) - sf::Vector2f(draggedPiece->getSprite().getGlobalBounds().width / 2, draggedPiece->getSprite().getGlobalBounds().height / 2));
                 }
             }
         }
     }
-    else if (event.type == sf::Event::MouseButtonReleased && event.mouseButton.button == sf::Mouse::Left) {
-        if (draggedPiece != nullptr) {
-            draggedPiece->setDragged(false);
+    else if (event.type == sf::Event::MouseButtonReleased && event.mouseButton.button == sf::Mouse::Left)
+    {
+        if (draggedPiece != nullptr)
+        {
             draggedPiece = nullptr;
         }
     }
