@@ -3,6 +3,9 @@
 #include <SFML/Graphics.hpp>
 #include <vector>
 #include "texture_loader.hpp"
+// #include "board.hpp"
+
+class Board;
 
 enum class PieceType {
     Pawn,
@@ -15,10 +18,10 @@ enum class PieceType {
 
 struct Move
 {
-    int fromFile;
     int fromRank;
-    int toFile;
+    int fromFile;
     int toRank;
+    int toFile;
 };
 
 class Piece
@@ -28,9 +31,12 @@ public:
     virtual ~Piece() = default;
 
     //*virtual*/ PieceType getType(); // = 0;
-    /*virtual*/ std::vector<Move> getLegalMoves(); // = 0;
+    virtual std::vector<Move> getLegalMoves(Board& board) = 0;
     //virtual void setSprite(TextureLoader& textureLoader) = 0;
     virtual sf::Sprite& getSprite() = 0;
+    bool getColor();
+    void setDragged(bool dragged);
+    bool isDragged();
 
 
 protected:
@@ -39,6 +45,7 @@ protected:
     // PieceType pieceType;
     // const int value;
     bool isWhite;
+    bool dragged;
     int rank;
     int file;
 };
@@ -52,6 +59,7 @@ public:
 
     //void setSprite(TextureLoader& textureLoader) override;
     sf::Sprite& getSprite() override;
+    std::vector<Move> getLegalMoves(Board& board) override;
 };
 
 class Rook : public Piece
@@ -63,6 +71,7 @@ public:
 
     //void setSprite(TextureLoader& textureLoader) override;
     sf::Sprite& getSprite() override;
+    std::vector<Move> getLegalMoves(Board& board) override;
 
 private:
 };
@@ -76,6 +85,7 @@ public:
 
     //void setSprite(TextureLoader& textureLoader) override;
     sf::Sprite& getSprite() override;
+    std::vector<Move> getLegalMoves(Board& board) override;
 };
 
 class Bishop : public Piece
@@ -87,6 +97,7 @@ public:
 
     //void setSprite(TextureLoader& textureLoader) override;
     sf::Sprite& getSprite() override;
+    std::vector<Move> getLegalMoves(Board& board) override;
 };
 
 class Queen : public Piece
@@ -98,6 +109,7 @@ public:
 
     //void setSprite(TextureLoader& textureLoader) override;
     sf::Sprite& getSprite() override;
+    std::vector<Move> getLegalMoves(Board& board) override;
 };
 
 class King : public Piece
@@ -109,6 +121,7 @@ public:
 
     //void setSprite(TextureLoader& textureLoader) override;
     sf::Sprite& getSprite() override;
+    std::vector<Move> getLegalMoves(Board& board) override;
 
 private:
 };

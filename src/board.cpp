@@ -14,6 +14,23 @@ void Board::setupBoard()
     readFEN("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR");
 }
 
+SquareStatus Board::getSquareStatus(int rank, int file, bool isWhite)
+{
+    Piece* piece = board[rank][file].get();
+    if (piece == nullptr)
+    {
+        return SquareStatus::Empty;
+    }
+    else if (piece->getColor() == isWhite)
+    {
+        return SquareStatus::Friendly;
+    }
+    else
+    {
+        return SquareStatus::Enemy;
+    }
+}
+
 void Board::readFEN(const std::string& FEN)
 {
     int rank = 0;
@@ -75,43 +92,72 @@ void Board::displayBoard(sf::RenderWindow& window, TextureLoader& textureLoader)
         for (int file = 0; file < 8; file++)
         {
             square.setFillColor((rank + file) % 2 == 0 ? sf::Color(235, 236, 208) : sf::Color(115, 149, 82));
-            square.setPosition(sf::Vector2f(50 + (file * config::SQUARE_SIZE), 48 + (rank * config::SQUARE_SIZE)));
+            square.setPosition(sf::Vector2f(50 + (file * config::SQUARE_SIZE), (config::WINDOW_HEIGHT - (8 * config::SQUARE_SIZE)) / 2 + (rank * config::SQUARE_SIZE)));
             window.draw(square);
 
             std::unique_ptr<Piece>& piece = board[rank][file];
-            if (piece != nullptr)
+            if (piece == nullptr)
             {
+                continue;
+            }
+            if (draggedPiece != piece.get())
+            {
+                piece->getSprite().setPosition(square.getPosition());
                 window.draw(piece->getSprite());
             }
+            // drawHitbox(window, piece->getSprite());
         }
+    }
+    if (draggedPiece != nullptr)
+    {
+        window.draw(draggedPiece->getSprite());
     }
 }
 
-void Board::handleInput(sf::RenderWindow& window, sf::Event& event)
-{
-    if (sf::Mouse::isButtonPressed(sf::Mouse::Left))
-    {
+void Board::handleInput(sf::RenderWindow& window, sf::Event& event) {
+    if (sf::Mouse::isButtonPressed(sf::Mouse::Left)) {
         sf::Vector2i mousePosition = sf::Mouse::getPosition(window);
         for (auto& row : board) {
             for (auto& piece : row) {
-                if (piece == nullptr)
-                {
+                if (piece == nullptr) {
                     continue;
                 }
 
                 sf::FloatRect boundingBox = piece->getSprite().getGlobalBounds();
-                if (boundingBox.contains(static_cast<float>(mousePosition.x), static_cast<float>(mousePosition.y)))
-                {
-                    piece->getSprite().setColor(sf::Color::Red);
+                if (boundingBox.contains(static_cast<float>(mousePosition.x), static_cast<float>(mousePosition.y)) && draggedPiece == nullptr) {
+                    piece->setDragged(true);
+                    draggedPiece = piece.get();
+
+                    // Get legal moves and check if there are any
+                    auto legalMoves = draggedPiece->getLegalMoves(*this);
+                    if (!legalMoves.empty()) {
+                        std::cout << legalMoves[0].toRank << '\n'; // Safe access
+                    }
+                }
+
+                // Check if a piece is being dragged before updating its position
+                if (draggedPiece != nullptr) {
+                    draggedPiece->getSprite().setPosition(
+                        static_cast<sf::Vector2f>(mousePosition) -
+                        sf::Vector2f(draggedPiece->getSprite().getGlobalBounds().width / 2,
+                            draggedPiece->getSprite().getGlobalBounds().height / 2)
+                    );
                 }
             }
         }
     }
+    else if (event.type == sf::Event::MouseButtonReleased && event.mouseButton.button == sf::Mouse::Left) {
+        if (draggedPiece != nullptr) {
+            draggedPiece->setDragged(false);
+            draggedPiece = nullptr;
+        }
+    }
 }
+
 
 void Board::drawHitbox(sf::RenderWindow& window, const sf::Sprite& sprite)
 {
-    
+
     sf::FloatRect bounds = sprite.getGlobalBounds();
     sf::RectangleShape hitbox(sf::Vector2f(bounds.width, bounds.height));
 
