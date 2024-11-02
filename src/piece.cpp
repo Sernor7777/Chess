@@ -1,15 +1,37 @@
-#include "piece.hpp"
-#include "board.hpp"
 #include <iostream>
 
-bool Piece::getColor()
+#include "piece.hpp"
+#include "board.hpp"
+
+void Piece::move(int file, int rank)
 {
-    return isWhite;
+    position.file = file;
+    position.rank = rank;
+    this->file = file;
+    this->rank = rank;
 }
 
-Pawn::Pawn(bool isWhite, int rank, int file, TextureLoader& textureLoader) : Piece(isWhite, rank, file)
+PieceTypes Piece::getType()
 {
-    sprite.setTexture(textureLoader.getTexture(isWhite ? "wp.png" : "bp.png"));
+    std::cout << "Piece type value: " << static_cast<int>(isWhitePiece ? static_cast<PieceTypes>(0) : static_cast<PieceTypes>(6)) << std::endl;
+    std::cout << pieceType << '\n';
+    return pieceType;
+}
+
+Position Piece::getPosition()
+{
+    //std::cout << "file: " << position.file << '\n';
+    return { position };
+}
+
+bool Piece::isWhite()
+{
+    return isWhitePiece;
+}
+
+Pawn::Pawn(bool isWhitePiece, int rank, int file, TextureLoader& textureLoader) : Piece(isWhitePiece ? PieceTypes::WhitePawn : PieceTypes::BlackPawn, isWhitePiece, rank, file)
+{
+    sprite.setTexture(textureLoader.getTexture(isWhitePiece ? "wp.png" : "bp.png"));
     sprite.setScale(6 / 15.0, 6 / 15.0);
     sprite.setPosition(50 + (file * config::SQUARE_SIZE), (config::WINDOW_HEIGHT - (8 * config::SQUARE_SIZE)) / 2 + (rank * config::SQUARE_SIZE));
 }
@@ -19,28 +41,51 @@ sf::Sprite& Pawn::getSprite()
     return sprite;
 }
 
-std::vector<Move> Pawn::getLegalMoves(Board& board) {
-    std::cout << "getLegalMoves called for Pawn at rank: " << rank << " file: " << file << std::endl;
-    if (rank == 6 && isWhite)
+std::vector<Move> Pawn::getLegalMoves(Board& board)
+{
+    legalMoves.clear();
+    // int square = (8 * position.rank) + position.file;
+    // legalMoves.resize(0);
+
+    // if (isWhitePiece)
+    // {
+    //     if (position.rank == 6 && !board.isOccupied(square + 8) && !board.isOccupied(square + 16))
+    //     {
+    //         legalMoves.push_back(Move{ position.rank, position.file, position.rank - 2, position.file });
+    //     }
+    //     if (!board.isOccupied(square + 8) && position.rank > 1)
+    //     {
+    //         legalMoves.push_back(Move{ position.rank, position.file, position.rank - 1, position.file });
+    //     }
+    // }
+
+    std::vector<Move> pawnMoves = MoveGen::generatePawnMoves(board, isWhitePiece);
+
+    for (const Move& move : pawnMoves)
     {
-        legalMoves.push_back(Move{ rank, file, rank - 1, file });
+        if (move.fromSquare == (8 * position.rank) + position.file)
+        {
+            legalMoves.push_back(move);
+        }
     }
+
+    for (Move move : legalMoves)
+    {
+        //std::cout << move.fromSquare << ' ' << move.toSquare << '\n';
+    }
+
     return legalMoves;
 }
 
-Rook::Rook(bool isWhite, int rank, int file, TextureLoader& textureLoader) : Piece(isWhite, rank, file)
+Rook::Rook(bool isWhitePiece, int rank, int file, TextureLoader& textureLoader) : Piece(isWhitePiece ? static_cast<PieceTypes>(1) : static_cast <PieceTypes>(7), isWhitePiece, rank, file)
 {
-    sprite.setTexture(textureLoader.getTexture(isWhite ? "wr.png" : "br.png"));
+    sprite.setTexture(textureLoader.getTexture(isWhitePiece ? "wr.png" : "br.png"));
     sprite.setScale(6 / 15.0, 6 / 15.0);
     sprite.setPosition(50 + (file * config::SQUARE_SIZE), (config::WINDOW_HEIGHT - (8 * config::SQUARE_SIZE)) / 2 + (rank * config::SQUARE_SIZE));
 }
 
 std::vector<Move> Rook::getLegalMoves(Board& board)
 {
-    if (rank == 2 && isWhite && board.getSquareStatus(rank + 1, file, isWhite) == 0)
-    {
-        legalMoves.push_back(Move{ rank, file, rank + 1, file });
-    }
     return legalMoves;
 }
 
@@ -49,19 +94,15 @@ sf::Sprite& Rook::getSprite()
     return sprite;
 }
 
-Knight::Knight(bool isWhite, int rank, int file, TextureLoader& textureLoader) : Piece(isWhite, rank, file)
+Knight::Knight(bool isWhitePiece, int rank, int file, TextureLoader& textureLoader) : Piece(isWhitePiece ? static_cast<PieceTypes>(2) : static_cast <PieceTypes>(8), isWhitePiece, rank, file)
 {
-    sprite.setTexture(textureLoader.getTexture(isWhite ? "wn.png" : "bn.png"));
+    sprite.setTexture(textureLoader.getTexture(isWhitePiece ? "wn.png" : "bn.png"));
     sprite.setScale(6 / 15.0, 6 / 15.0);
     sprite.setPosition(50 + (file * config::SQUARE_SIZE), (config::WINDOW_HEIGHT - (8 * config::SQUARE_SIZE)) / 2 + (rank * config::SQUARE_SIZE));
 }
 
 std::vector<Move> Knight::getLegalMoves(Board& board)
 {
-    if (rank == 2 && isWhite && board.getSquareStatus(rank + 1, file, isWhite) == 0)
-    {
-        legalMoves.push_back(Move{ rank, file, rank + 1, file });
-    }
     return legalMoves;
 }
 
@@ -70,19 +111,15 @@ sf::Sprite& Knight::getSprite()
     return sprite;
 }
 
-Bishop::Bishop(bool isWhite, int rank, int file, TextureLoader& textureLoader) : Piece(isWhite, rank, file)
+Bishop::Bishop(bool isWhitePiece, int rank, int file, TextureLoader& textureLoader) : Piece(isWhitePiece ? static_cast<PieceTypes>(3) : static_cast <PieceTypes>(9), isWhitePiece, rank, file)
 {
-    sprite.setTexture(textureLoader.getTexture(isWhite ? "wb.png" : "bb.png"));
+    sprite.setTexture(textureLoader.getTexture(isWhitePiece ? "wb.png" : "bb.png"));
     sprite.setScale(6 / 15.0, 6 / 15.0);
     sprite.setPosition(50 + (file * config::SQUARE_SIZE), (config::WINDOW_HEIGHT - (8 * config::SQUARE_SIZE)) / 2 + (rank * config::SQUARE_SIZE));
 }
 
 std::vector<Move> Bishop::getLegalMoves(Board& board)
 {
-    if (rank == 2 && isWhite && board.getSquareStatus(rank + 1, file, isWhite) == 0)
-    {
-        legalMoves.push_back(Move{ rank, file, rank + 1, file });
-    }
     return legalMoves;
 }
 
@@ -91,19 +128,15 @@ sf::Sprite& Bishop::getSprite()
     return sprite;
 }
 
-Queen::Queen(bool isWhite, int rank, int file, TextureLoader& textureLoader) : Piece(isWhite, rank, file)
+Queen::Queen(bool isWhitePiece, int rank, int file, TextureLoader& textureLoader) : Piece(isWhitePiece ? static_cast<PieceTypes>(4) : static_cast <PieceTypes>(10), isWhitePiece, rank, file)
 {
-    sprite.setTexture(textureLoader.getTexture(isWhite ? "wq.png" : "bq.png"));
+    sprite.setTexture(textureLoader.getTexture(isWhitePiece ? "wq.png" : "bq.png"));
     sprite.setScale(6 / 15.0, 6 / 15.0);
     sprite.setPosition(50 + (file * config::SQUARE_SIZE), (config::WINDOW_HEIGHT - (8 * config::SQUARE_SIZE)) / 2 + (rank * config::SQUARE_SIZE));
 }
 
 std::vector<Move> Queen::getLegalMoves(Board& board)
 {
-    if (rank == 2 && isWhite && board.getSquareStatus(rank + 1, file, isWhite) == 0)
-    {
-        legalMoves.push_back(Move{ rank, file, rank + 1, file });
-    }
     return legalMoves;
 }
 
@@ -112,19 +145,15 @@ sf::Sprite& Queen::getSprite()
     return sprite;
 }
 
-King::King(bool isWhite, int rank, int file, TextureLoader& textureLoader) : Piece(isWhite, rank, file)
+King::King(bool isWhitePiece, int rank, int file, TextureLoader& textureLoader) : Piece(isWhitePiece ? static_cast<PieceTypes>(5) : static_cast <PieceTypes>(11), isWhitePiece, rank, file)
 {
-    sprite.setTexture(textureLoader.getTexture(isWhite ? "wk.png" : "bk.png"));
+    sprite.setTexture(textureLoader.getTexture(isWhitePiece ? "wk.png" : "bk.png"));
     sprite.setScale(6 / 15.0, 6 / 15.0);
     sprite.setPosition(50 + (file * config::SQUARE_SIZE), (config::WINDOW_HEIGHT - (8 * config::SQUARE_SIZE)) / 2 + (rank * config::SQUARE_SIZE));
 }
 
 std::vector<Move> King::getLegalMoves(Board& board)
 {
-    if (rank == 2 && isWhite && board.getSquareStatus(rank + 1, file, isWhite) == 0)
-    {
-        legalMoves.push_back(Move{ rank, file, rank + 1, file });
-    }
     return legalMoves;
 }
 

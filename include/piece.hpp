@@ -2,35 +2,56 @@
 
 #include <SFML/Graphics.hpp>
 #include <vector>
+
 #include "texture_loader.hpp"
-// #include "board.hpp"
+#include "bitboard.hpp"
+#include "movegen.hpp"
+#include "move.hpp"
 
 class Board;
 
-struct Move
+enum PieceTypes
 {
-    int fromRank;
-    int fromFile;
-    int toRank;
-    int toFile;
+    WhitePawn,
+    WhiteRook,
+    WhiteKnight,
+    WhiteBishop,
+    WhiteQueen,
+    WhiteKing,
+    BlackPawn,
+    BlackRook,
+    BlackKnight,
+    BlackBishop,
+    BlackQueen,
+    BlackKing
+};
+
+struct Position
+{
+    int file;
+    int rank;
 };
 
 class Piece
 {
 public:
-    Piece(bool isWhite, int rank, int file) : isWhite(isWhite), rank(rank), file(file) {};
+    Piece(PieceTypes pieceType, const bool isWhitePiece, int file, int rank) : pieceType(pieceType), isWhitePiece(isWhitePiece), position{ file, rank }, rank(rank), file(file) {}
     virtual ~Piece() = default;
 
+    void move(int file, int rank);
     virtual std::vector<Move> getLegalMoves(Board& board) = 0;
-    //virtual void setSprite(TextureLoader& textureLoader) = 0;
+    Position getPosition();
     virtual sf::Sprite& getSprite() = 0;
-    bool getColor();
+    bool isWhite();
+    PieceTypes getType();
 
 protected:
+    PieceTypes pieceType;
     std::vector<Move> legalMoves;
     sf::Sprite sprite;
-    bool isWhite;
     bool dragged;
+    const bool isWhitePiece;
+    Position position;
     int rank;
     int file;
 };
@@ -39,10 +60,9 @@ class Pawn : public Piece
 {
 public:
     static constexpr int value = 1;
-    
-    Pawn(bool isWhite, int rank, int file, TextureLoader& textureLoader);
 
-    //void setSprite(TextureLoader& textureLoader) override;
+    Pawn(const bool isWhitePiece, int file, int rank, TextureLoader& textureLoader);
+
     sf::Sprite& getSprite() override;
     std::vector<Move> getLegalMoves(Board& board) override;
 };
@@ -52,7 +72,7 @@ class Rook : public Piece
 public:
     static constexpr int value = 5;
 
-    Rook(bool isWhite, int rank, int file, TextureLoader& textureLoader);
+    Rook(bool isWhite, int file, int rank, TextureLoader& textureLoader);
 
     //void setSprite(TextureLoader& textureLoader) override;
     sf::Sprite& getSprite() override;
@@ -65,8 +85,8 @@ class Knight : public Piece
 {
 public:
     static constexpr int value = 3;
-    
-    Knight(bool isWhite, int rank, int file, TextureLoader& textureLoader);
+
+    Knight(bool isWhite, int file, int rank, TextureLoader& textureLoader);
 
     //void setSprite(TextureLoader& textureLoader) override;
     sf::Sprite& getSprite() override;
@@ -78,7 +98,7 @@ class Bishop : public Piece
 public:
     static constexpr int value = 3;
 
-    Bishop(bool isWhite, int rank, int file, TextureLoader& textureLoader);
+    Bishop(bool isWhite, int file, int rank, TextureLoader& textureLoader);
 
     //void setSprite(TextureLoader& textureLoader) override;
     sf::Sprite& getSprite() override;
@@ -90,7 +110,7 @@ class Queen : public Piece
 public:
     static constexpr int value = 9;
 
-    Queen(bool isWhite, int rank, int file, TextureLoader& textureLoader);
+    Queen(bool isWhite, int file, int rank, TextureLoader& textureLoader);
 
     //void setSprite(TextureLoader& textureLoader) override;
     sf::Sprite& getSprite() override;
@@ -102,7 +122,7 @@ class King : public Piece
 public:
     static constexpr int value = INT_MAX;
 
-    King(bool isWhite, int rank, int file, TextureLoader& textureLoader);
+    King(bool isWhite, int file, int rank, TextureLoader& textureLoader);
 
     //void setSprite(TextureLoader& textureLoader) override;
     sf::Sprite& getSprite() override;
