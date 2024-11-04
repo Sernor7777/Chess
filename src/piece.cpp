@@ -13,7 +13,7 @@ void Piece::move(int file, int rank)
 
 PieceTypes Piece::getType()
 {
-    std::cout << "Piece type value: " << static_cast<int>(isWhitePiece ? static_cast<PieceTypes>(0) : static_cast<PieceTypes>(6)) << std::endl;
+    //std::cout << "Piece type value: " << static_cast<int>(isWhitePiece ? static_cast<PieceTypes>(0) : static_cast<PieceTypes>(6)) << std::endl;
     std::cout << pieceType << '\n';
     return pieceType;
 }
@@ -44,23 +44,8 @@ sf::Sprite& Pawn::getSprite()
 std::vector<Move> Pawn::getLegalMoves(Board& board)
 {
     legalMoves.clear();
-    // int square = (8 * position.rank) + position.file;
-    // legalMoves.resize(0);
-
-    // if (isWhitePiece)
-    // {
-    //     if (position.rank == 6 && !board.isOccupied(square + 8) && !board.isOccupied(square + 16))
-    //     {
-    //         legalMoves.push_back(Move{ position.rank, position.file, position.rank - 2, position.file });
-    //     }
-    //     if (!board.isOccupied(square + 8) && position.rank > 1)
-    //     {
-    //         legalMoves.push_back(Move{ position.rank, position.file, position.rank - 1, position.file });
-    //     }
-    // }
 
     std::vector<Move> pawnMoves = MoveGen::generatePawnMoves(board, isWhitePiece);
-
     for (const Move& move : pawnMoves)
     {
         if (move.fromSquare == (8 * position.rank) + position.file)
@@ -69,10 +54,10 @@ std::vector<Move> Pawn::getLegalMoves(Board& board)
         }
     }
 
-    for (Move move : legalMoves)
-    {
-        //std::cout << move.fromSquare << ' ' << move.toSquare << '\n';
-    }
+    // for (Move move : legalMoves)
+    // {
+    //     std::cout << move.fromSquare << ' ' << move.toSquare << '\n';
+    // }
 
     return legalMoves;
 }
@@ -103,6 +88,17 @@ Knight::Knight(bool isWhitePiece, int rank, int file, TextureLoader& textureLoad
 
 std::vector<Move> Knight::getLegalMoves(Board& board)
 {
+    legalMoves.clear();
+
+    std::vector<Move> knightMoves = MoveGen::generateKnightMoves(board, isWhitePiece);
+    for (const Move& move : knightMoves)
+    {
+        if (move.fromSquare == (8 * position.rank) + position.file)
+        {
+            legalMoves.push_back(move);
+        }
+    }
+
     return legalMoves;
 }
 
@@ -154,6 +150,17 @@ King::King(bool isWhitePiece, int rank, int file, TextureLoader& textureLoader) 
 
 std::vector<Move> King::getLegalMoves(Board& board)
 {
+    legalMoves.clear();
+
+    std::vector<Move> kingMoves = MoveGen::generateKingMoves(board, isWhitePiece);
+    for (const Move& move : kingMoves)
+    {
+        if (move.fromSquare == (8 * position.rank) + position.file)
+        {
+            legalMoves.push_back(move);
+        }
+    }
+
     return legalMoves;
 }
 

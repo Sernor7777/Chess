@@ -4,7 +4,7 @@
 #include <iostream>
 #include <memory>
 
-Board::Board(TextureLoader& textureLoader) : textureLoader(textureLoader)
+Board::Board(TextureLoader& textureLoader, MagicBitboard& magicBitboard) : textureLoader(textureLoader), magicBitboard(magicBitboard)
 {
     setupBoard();
 }
@@ -14,21 +14,19 @@ void Board::setupBoard()
     readFEN("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR");
 }
 
-void Board::makeMove(int fromFile, int fromRank, int toFile, int toRank, PieceTypes pieceType)
+//void Board::makeMove(int fromFile, int fromRank, int toFile, int toRank, PieceTypes pieceType)
+void Board::makeMove(Move move, PieceTypes pieceType)
 {
-    int fromSquare = (8 * fromRank) + fromFile;
-    int toSquare = (8 * toRank) + toFile;
+    int fromSquare = move.fromSquare;
+    int toSquare = move.toSquare;
 
     if (bitboards[Occupied].isOccupied(toSquare))
     {
-        if (bitboards[board[fromSquare]->isWhite() ? OccupiedByBlack : OccupiedByWhite].isOccupied(toSquare))
-        {
-            board[toSquare].reset();
-            bitboards[board[fromSquare]->isWhite() ? OccupiedByBlack : OccupiedByWhite].removePiece(toSquare);
-        }
+        board[toSquare].reset();
+        bitboards[board[fromSquare]->isWhite() ? OccupiedByBlack : OccupiedByWhite].removePiece(toSquare);
     }
 
-    board[fromSquare]->move(toFile, toRank);
+    board[fromSquare]->move(toSquare % 8, toSquare / 8);
     board[toSquare] = std::move(board[fromSquare]);
 
     bitboards[Occupied].removePiece(fromSquare);
@@ -45,6 +43,8 @@ void Board::makeMove(int fromFile, int fromRank, int toFile, int toRank, PieceTy
         bitboards[OccupiedByBlack].removePiece(fromSquare);
         bitboards[OccupiedByBlack].setPiece(toSquare);
     }
+
+    legalMoves.clear();
 }
 
 void Board::readFEN(const std::string& FEN)
@@ -125,6 +125,14 @@ void Board::displayBoard(sf::RenderWindow& window, TextureLoader& textureLoader)
         int file = i % 8;
         int rank = 7 - (i / 8);
         square.setFillColor((file + rank) % 2 == 0 ? sf::Color(235, 236, 208) : sf::Color(115, 149, 82));
+        for (const Move& move : legalMoves)
+        {
+            if ((8 * (7 - rank)) + file == move.toSquare)
+            {
+                square.setFillColor((file + rank) % 2 == 0 ? sf::Color(235, 125, 106) : sf::Color(211, 108, 80));
+            }
+        }
+
         square.setPosition(sf::Vector2f(50 + (file * config::SQUARE_SIZE), (config::WINDOW_HEIGHT - (8 * config::SQUARE_SIZE)) / 2 + (rank * config::SQUARE_SIZE)));
         window.draw(square);
 
@@ -162,6 +170,7 @@ void Board::handleInput(sf::RenderWindow& window, sf::Event& event)
             if (boundingBox.contains(static_cast<float>(mousePosition.x), static_cast<float>(mousePosition.y)) && draggedPiece == nullptr)
             {
                 draggedPiece = piece.get();
+                legalMoves = draggedPiece->getLegalMoves(*this);
             }
 
             if (draggedPiece != nullptr)
@@ -180,14 +189,17 @@ void Board::handleInput(sf::RenderWindow& window, sf::Event& event)
         int targetRank = ((mousePosition.y - ((config::WINDOW_HEIGHT - (8 * config::SQUARE_SIZE)) / 2)) / config::SQUARE_SIZE);
         targetRank = 7 - targetRank;
         int targetFile = (mousePosition.x - 50) / config::SQUARE_SIZE;
-        std::vector<Move> legalMoves = draggedPiece->getLegalMoves(*this);
+        //legalMoves = draggedPiece->getLegalMoves(*this);
         for (const Move& move : legalMoves)
         {
             if (move.toSquare == (8 * (targetRank)) + targetFile)
             {
-                makeMove(draggedPiece->getPosition().file, draggedPiece->getPosition().rank, targetFile, targetRank, draggedPiece->getType());
+                //makeMove(draggedPiece->getPosition().file, draggedPiece->getPosition().rank, targetFile, targetRank, draggedPiece->getType());
+                makeMove(move, draggedPiece->getType());
             }
         }
+
+        legalMoves.clear();
         draggedPiece = nullptr;
     }
 }
@@ -195,6 +207,16 @@ void Board::handleInput(sf::RenderWindow& window, sf::Event& event)
 std::array<Bitboard, 17>& Board::getBitboards()
 {
     return bitboards;
+}
+
+std::array<uint64_t, 64>& Board::getRookMagicNumbers()
+{
+    return magicBitboard.getRookMagicNumbers();
+}
+
+std::array<uint64_t, 64>& Board::getBishopMagicNumbers()
+{
+    return magicBitboard.getBishopMagicNumbers();
 }
 
 void Board::drawHitbox(sf::RenderWindow& window, const sf::Sprite& sprite)
