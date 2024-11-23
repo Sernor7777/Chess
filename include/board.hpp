@@ -24,29 +24,31 @@ enum BitboardTypes
 class Board
 {
 public:
-    Board(TextureLoader& textureLoader, MagicBitboard& magicBitboard);
+    Board(TextureLoader& textureLoader);
     // ~Board();
     // Board(std::string FEN);
 
     //void makeMove(int fromFile, int fromRank, int toFile, int toRank, PieceTypes pieceType);
-    void makeMove(Move move, PieceTypes pieceType);
-    void readFEN(const std::string& FEN);
-    void displayBoard(sf::RenderWindow& window, TextureLoader& textureLoader);
-    void handleInput(sf::RenderWindow& window, sf::Event& event);
+    void                      makeMove(Move move, PieceTypes pieceType);
+    void                      readFEN(const std::string& FEN);
+    void                      displayBoard(sf::RenderWindow& window, TextureLoader& textureLoader);
+    void                      handleInput(sf::RenderWindow& window, sf::Event& event);
     std::array<uint64_t, 64>& getRookMagicNumbers();
     std::array<uint64_t, 64>& getBishopMagicNumbers();
     // std::vector<Move> getLegalMoves();
     // SquareStatus getSquareStatus(int rank, int file, bool isWhite);
 
-    std::array<Bitboard, 17>& getBitboards();
+    std::array<uint64_t, 17>& getBitboards();
 
 private:
     std::array<std::unique_ptr<Piece>, 64> board;
-    std::array<Bitboard, 17> bitboards;
-    Piece* draggedPiece = nullptr;
-    std::vector<Move> legalMoves;
-    TextureLoader textureLoader;
-    MagicBitboard magicBitboard;
+    // std::array<Bitboard, 17> bitboards;
+    std::array<uint64_t, 17> bitboards;
+    Piece*                   draggedPiece = nullptr;
+    std::vector<Move>        legalMoves;
+    TextureLoader            textureLoader;
+    MagicBitboard            magicBitboard;
+    MoveGen                  moveGen;
 
     void setupBoard();
     void drawHitbox(sf::RenderWindow& window, const sf::Sprite& sprite);

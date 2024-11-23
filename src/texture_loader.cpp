@@ -6,15 +6,13 @@ TextureLoader::TextureLoader()
 {
     for (const auto& file : std::filesystem::directory_iterator(config::assetsPath + "/images"))
     {
-        if (file.is_regular_file()) {
+        if (file.is_regular_file())
+        {
             const std::string filePath = file.path().string();
-            sf::Texture texture;
+            sf::Texture       texture;
 
-            if (!texture.loadFromFile(filePath))
-            {
-                std::runtime_error("Failed to load texture!");
-            }
-            
+            if (!texture.loadFromFile(filePath)) { std::runtime_error("Failed to load texture!"); }
+
             texture.setSmooth(true);
             textures[file.path().filename().string()] = texture;
         }
@@ -24,8 +22,6 @@ TextureLoader::TextureLoader()
 sf::Texture& TextureLoader::getTexture(const char* textureName)
 {
     auto it = textures.find(textureName);
-    if (it == textures.end()) {
-        std::runtime_error("Texture not found!");
-    }
+    if (it == textures.end()) { std::runtime_error("Texture not found!"); }
     return it->second;
 }

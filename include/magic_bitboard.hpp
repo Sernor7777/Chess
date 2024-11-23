@@ -1,17 +1,35 @@
 #pragma once
 
-#include <cstdint>
 #include <array>
+#include <cstdint>
 #include <vector>
 
-#include "move.hpp"
 #include "bitboard.hpp"
+#include "move.hpp"
 
-struct Magic {
-    uint64_t* ptr;
-    Bitboard mask;
-    uint64_t magic;
-    int shift;
+class PRNG
+{
+public:
+    PRNG(int s) : seed(s) {}
+
+    uint64_t sparse_rand()
+    {
+        seed ^= seed >> 12;
+        seed ^= seed << 25;
+        seed ^= seed >> 27;
+        return seed * 2685821657736338717LL;
+    }
+
+private:
+    uint64_t seed;
+};
+
+struct Magic
+{
+    uint64_t* attacks;
+    uint64_t  mask;
+    uint64_t  magic;
+    int       shift;
 };
 
 class MagicBitboard
@@ -19,25 +37,25 @@ class MagicBitboard
 public:
     MagicBitboard();
 
-    std::array<uint64_t, 64>& getRookMagicNumbers();
-    std::array<uint64_t, 64>& getBishopMagicNumbers();
-    
-private:
-    //Magic rookTable[64];
-    std::array<uint64_t, 64> rookMagicNumbers;
-    std::array<uint64_t, 64> bishopMagicNumbers;
+    uint64_t getRookAttacks(uint64_t occupancy, int square) const;
+    uint64_t getBishopAttacks(int square, uint64_t occupancy) const;
+    uint64_t getQueenAttacks(int square, uint64_t occupancy) const;
 
-    std::array<Bitboard, 64> rookMasks;
+private:
+    static const std::array<uint64_t, 64> ROOK_MAGIC_NUMBERS;
+    static const std::array<uint64_t, 64> BISHOP_MAGIC_NUMBERS;
+    static const std::array<int, 64>      ROOK_BITS_SHIFT;
+    static const std::array<int, 64>      BISHOP_BITS_SHIFT;
 
     std::array<Magic, 64> rookTable;
 
-    std::vector<uint64_t> rookAttackTable;
+    void     generateRookAttackTable();
+    uint64_t calculateRookAttacks(uint64_t blockers, int square) const;
+    uint64_t calculateRookMask(int square) const;
 
+    uint64_t generateMagicIndex(uint64_t occupancy, int square) const;
 
-    std::array<int, 64> rookBitsShift;
-    std::array<int, 64> bishopBitsShift;
+    std::vector<uint64_t> generateBlockerBitboards(uint64_t mask) const;
 
-    std::vector<Bitboard>& generateRookAttackTable();
-    std::array<Bitboard, 64>& generateRookMasks();
-
+    //void findMagicNumbers();
 };

@@ -1,218 +1,159 @@
 #include "magic_bitboard.hpp"
 #include <iostream>
 
-MagicBitboard::MagicBitboard()
+const std::array<uint64_t, 64> MagicBitboard::ROOK_MAGIC_NUMBERS = {
+    0x80004000208011ULL,   0x2100102100804000ULL, 0x80200080100008ULL,   0x680061000800800ULL,  0x200100200082004ULL,
+    0x2200010402001008ULL, 0x80020000800100ULL,   0x100002100038052ULL,  0x802040008000ULL,     0x11002100804000ULL,
+    0x1210802000801008ULL, 0x101000c20100101ULL,  0x40808008000400ULL,   0x2202800400800200ULL, 0x91003200110004ULL,
+    0x490800040800100ULL,  0x508000c000200048ULL, 0x4e0004000300041ULL,  0x30008010802000ULL,   0x1010008010800800ULL,
+    0x401c808008000400ULL, 0x984008080040200ULL,  0x2000400c1121008ULL,  0x20020024488104ULL,   0x4940802080004002ULL,
+    0xc0100140200042ULL,   0x2124100200101ULL,    0x8900084200201201ULL, 0x8050100100800ULL,    0x24000480800200ULL,
+    0x81014002e0841ULL,    0x400008200012844ULL,  0x4080002000400040ULL, 0x80400080200aULL,     0x10008010802000ULL,
+    0x48041000800881ULL,   0x41101000800ULL,      0x2000280800400ULL,    0x202482104001012ULL,  0x440082000041ULL,
+    0x180400080008020ULL,  0x9120005000204002ULL, 0x8088420082160020ULL, 0x810100008008080ULL,  0x1020800850010ULL,
+    0x6000400410680120ULL, 0x90583002040081ULL,   0x10000100a0420004ULL, 0x8800804200210200ULL, 0x1000400880200480ULL,
+    0x4602028040201a00ULL, 0x1008801000480180ULL, 0x40080080080ULL,      0x40040002008080ULL,   0x20a20108104400ULL,
+    0x104650c008200ULL,    0x2300800020190041ULL, 0x4a481014001d7ULL,    0x8024204208120082ULL, 0x29000905201001ULL,
+    0x4003000230480005ULL, 0xc101000208040001ULL, 0x8421001080084ULL,    0x1120502084010052ULL};
+
+const std::array<uint64_t, 64> MagicBitboard::BISHOP_MAGIC_NUMBERS = {
+    0x1841160051a00401ULL, 0x202000012224a02ULL,  0x284003005412542ULL,  0x2800a220c40502ULL,   0x68005050040308ULL,
+    0x440802c810020230ULL, 0x240034002014417ULL,  0x45202411310208aULL,  0x1a08410602016172ULL, 0x830464044100e08ULL,
+    0x411a31a010040808ULL, 0x200124000484405ULL,  0x60020c80000120aULL,  0x6a001002583420aULL,  0x10082020084c0051ULL,
+    0x1325202008030692ULL, 0x2002026a00045020ULL, 0x41051c000052122cULL, 0x10200b000100803ULL,  0x720204000610032ULL,
+    0x6818603041604002ULL, 0x1041040010020001ULL, 0x301081420025204ULL,  0x42024420826001ULL,   0x404304000131801ULL,
+    0x1041090c00842100ULL, 0x144110020080240ULL,  0x1211004002202008ULL, 0x105080000500401ULL,  0x2080600c62080131ULL,
+    0x844100114022082ULL,  0x841080020804b00ULL,  0x8240800080210ULL,    0x4002144012084210ULL, 0x2052000060904ULL,
+    0x88400420500c14ULL,   0x434000204404ULL,     0x1840240800212081ULL, 0x4208c019244184ULL,   0x54da10030841ULL,
+    0x1200090011080a02ULL, 0x800140c000414c8ULL,  0x4400382000401058ULL, 0x100020140000105ULL,  0x610040040044421ULL,
+    0x20001202848110aULL,  0x222011010300101ULL,  0x106608008012304ULL,  0x220429002014a02ULL,  0x110800a005104208ULL,
+    0x806201048200111ULL,  0x2082008a03000802ULL, 0x2041008034011420ULL, 0x401006005004434ULL,  0x90a429004080204ULL,
+    0x2041040950041802ULL, 0x1002200028441145ULL, 0x109004012802018aULL, 0x65100405500801ULL,   0x284240458180a00ULL,
+    0x2002441020024020ULL, 0x4a10110101144112ULL, 0x1010a2c00005030ULL,  0x40c012121020424ULL};
+
+const std::array<int, 64> MagicBitboard::ROOK_BITS_SHIFT = {12, 11, 11, 11, 11, 11, 11, 12, 11, 10, 10, 10, 10, 10, 10, 11,
+                                                            11, 10, 10, 10, 10, 10, 10, 11, 11, 10, 10, 10, 10, 10, 10, 11,
+                                                            11, 10, 10, 10, 10, 10, 10, 11, 11, 10, 10, 10, 10, 10, 10, 11,
+                                                            11, 10, 10, 10, 10, 10, 10, 11, 12, 11, 11, 11, 11, 11, 11, 12};
+
+const std::array<int, 64> MagicBitboard::BISHOP_BITS_SHIFT = {
+    6, 5, 5, 5, 5, 5, 5, 6, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 7, 7, 7, 7, 5, 5, 5, 5, 7, 9, 9, 7, 5, 5,
+    5, 5, 7, 9, 9, 7, 5, 5, 5, 5, 7, 7, 7, 7, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 6, 5, 5, 5, 5, 5, 5, 6};
+
+MagicBitboard::MagicBitboard() { generateRookAttackTable(); }
+
+uint64_t MagicBitboard::getRookAttacks(uint64_t occupancy, int square) const
 {
-    rookMagicNumbers = {
-        0xc80001828100040ULL,
-        0x26004408400010ULL,
-        0x1060040000202048ULL,
-        0x110141100800888ULL,
-        0x84420501a000802ULL,
-        0x1803002905002224ULL,
-        0x104380106000182ULL,
-        0x208201001041ULL,
-        0x4080118100002020ULL,
-        0x1c40120100004020ULL,
-        0x1009040000802020ULL,
-        0x884002800841010ULL,
-        0x2220068801201011ULL,
-        0x1911442000004022ULL,
-        0x4020802010011ULL,
-        0x220004400102001ULL,
-        0x4009608000842280ULL,
-        0x4060104318400210ULL,
-        0x811002400040020ULL,
-        0x4801520000c41010ULL,
-        0x4280020022204ULL,
-        0x413000408404041ULL,
-        0xc028800000101ULL,
-        0x100400e904000201ULL,
-        0x3800242000100a5ULL,
-        0xc0008008210321ULL,
-        0x2003002400001261ULL,
-        0x410028894a041001ULL,
-        0x800041040002901ULL,
-        0x1002080204080eULL,
-        0x22218040040401ULL,
-        0x24084103280482ULL,
-        0x20002020801040ULL,
-        0x1020200020400812ULL,
-        0x4082000000c0061ULL,
-        0x4042024001200804ULL,
-        0x5040040000024188ULL,
-        0x100040008101a13ULL,
-        0x408108018080802ULL,
-        0x80408064000041ULL,
-        0x850400821800120ULL,
-        0x8100240008480bULL,
-        0x6008080001100241ULL,
-        0x1eb0100200110248ULL,
-        0x30202216010004ULL,
-        0x802021000c6142ULL,
-        0x32200444020410aULL,
-        0xa0202004580041ULL,
-        0x80410000406180ULL,
-        0x8220200002040a3ULL,
-        0x93000200a002804ULL,
-        0x40080080010010b2ULL,
-        0x40080101012a1304ULL,
-        0x4041000001012ULL,
-        0x10001000e840482ULL,
-        0xc04020200004885ULL,
-        0x1080006110001041ULL,
-        0x2081211102084250ULL,
-        0x1020001500014619ULL,
-        0x3810440a10000c23ULL,
-        0x410484200860422ULL,
-        0x180b0201090b2004ULL,
-        0x1100040124410282ULL,
-        0x1820a101000443ULL
-    };
+    uint64_t index   = generateMagicIndex(occupancy, square);
+    uint64_t attacks = rookTable[square].attacks[index];
 
-    bishopMagicNumbers = {
-        0x1841160051a00401ULL,
-        0x202000012224a02ULL,
-        0x284003005412542ULL,
-        0x2800a220c40502ULL,
-        0x68005050040308ULL,
-        0x440802c810020230ULL,
-        0x240034002014417ULL,
-        0x45202411310208aULL,
-        0x1a08410602016172ULL,
-        0x830464044100e08ULL,
-        0x411a31a010040808ULL,
-        0x200124000484405ULL,
-        0x60020c80000120aULL,
-        0x6a001002583420aULL,
-        0x10082020084c0051ULL,
-        0x1325202008030692ULL,
-        0x2002026a00045020ULL,
-        0x41051c000052122cULL,
-        0x10200b000100803ULL,
-        0x720204000610032ULL,
-        0x6818603041604002ULL,
-        0x1041040010020001ULL,
-        0x301081420025204ULL,
-        0x42024420826001ULL,
-        0x404304000131801ULL,
-        0x1041090c00842100ULL,
-        0x144110020080240ULL,
-        0x1211004002202008ULL,
-        0x105080000500401ULL,
-        0x2080600c62080131ULL,
-        0x844100114022082ULL,
-        0x841080020804b00ULL,
-        0x8240800080210ULL,
-        0x4002144012084210ULL,
-        0x2052000060904ULL,
-        0x88400420500c14ULL,
-        0x434000204404ULL,
-        0x1840240800212081ULL,
-        0x4208c019244184ULL,
-        0x54da10030841ULL,
-        0x1200090011080a02ULL,
-        0x800140c000414c8ULL,
-        0x4400382000401058ULL,
-        0x100020140000105ULL,
-        0x610040040044421ULL,
-        0x20001202848110aULL,
-        0x222011010300101ULL,
-        0x106608008012304ULL,
-        0x220429002014a02ULL,
-        0x110800a005104208ULL,
-        0x806201048200111ULL,
-        0x2082008a03000802ULL,
-        0x2041008034011420ULL,
-        0x401006005004434ULL,
-        0x90a429004080204ULL,
-        0x2041040950041802ULL,
-        0x1002200028441145ULL,
-        0x109004012802018aULL,
-        0x65100405500801ULL,
-        0x284240458180a00ULL,
-        0x2002441020024020ULL,
-        0x4a10110101144112ULL,
-        0x1010a2c00005030ULL,
-        0x40c012121020424ULL
-    };
+    return rookTable[square].attacks[index];
+}
 
-    rookBitsShift = {
-        12, 11, 11, 11, 11, 11, 11, 12,
-        11, 10, 10, 10, 10, 10, 10, 11,
-        11, 10, 10, 10, 10, 10, 10, 11,
-        11, 10, 10, 10, 10, 10, 10, 11,
-        11, 10, 10, 10, 10, 10, 10, 11,
-        11, 10, 10, 10, 10, 10, 10, 11,
-        11, 10, 10, 10, 10, 10, 10, 11,
-        12, 11, 11, 11, 11, 11, 11, 12
-    };
+uint64_t MagicBitboard::calculateRookMask(int square) const
+{
+    uint64_t mask = 0ULL;
+    int      file = square % 8;
+    int      rank = square / 8;
 
-    bishopBitsShift = {
-        6, 5, 5, 5, 5, 5, 5, 6,
-        5, 5, 5, 5, 5, 5, 5, 5,
-        5, 5, 7, 7, 7, 7, 5, 5,
-        5, 5, 7, 9, 9, 7, 5, 5,
-        5, 5, 7, 9, 9, 7, 5, 5,
-        5, 5, 7, 7, 7, 7, 5, 5,
-        5, 5, 5, 5, 5, 5, 5, 5,
-        6, 5, 5, 5, 5, 5, 5, 6
-    };
-
-    generateRookMasks();
-
-    for (int square = 0; square < 64; square++)
+    for (int f = file + 1; f < 7; ++f)
     {
-        //rookTable[square].ptr = ;
-        rookTable[square].mask = rookMasks[square];
-        rookTable[square].magic = rookMagicNumbers[square];
-        rookTable[square].shift = 64 - rookBitsShift[square];
+        Bitboard::setBit(mask, (rank * 8) + f);
     }
 
-        
-}
-
-std::array<uint64_t, 64>& MagicBitboard::getRookMagicNumbers()
-{
-    return rookMagicNumbers;
-}
-
-std::array<uint64_t, 64>& MagicBitboard::getBishopMagicNumbers()
-{
-    return bishopMagicNumbers;
-}
-
-std::array<Bitboard, 64>& MagicBitboard::generateRookMasks()
-{
-    rookMasks.fill(Bitboard());
-
-    for (int square = 0; square < 64; square++)
+    for (int f = file - 1; f > 0; --f)
     {
-        int file = square % 8;
-        int rank = square / 8;
-
-        for (int f = file + 1; f < 7; f++)
-        {
-            rookMasks[square].setPiece((rank * 8) + f);
-        }
-
-        for (int f = file - 1; f > 0; f--)
-        {
-            rookMasks[square].setPiece((rank * 8) + f);
-        }
-
-        for (int r = rank + 1; r < 7; r++)
-        {
-            rookMasks[square].setPiece((r * 8) + file);
-        }
-
-        for (int r = rank - 1; r > 0; r--)
-        {
-            rookMasks[square].setPiece((r * 8) + file);
-        }
-
-        rookMasks[square].print();
+        Bitboard::setBit(mask, (rank * 8) + f);
     }
 
-    return rookMasks;
+    for (int r = rank + 1; r < 7; ++r)
+    {
+        Bitboard::setBit(mask, (r * 8) + file);
+    }
+
+    for (int r = rank - 1; r > 0; --r)
+    {
+        Bitboard::setBit(mask, (r * 8) + file);
+    }
+
+    return mask;
+}
+
+uint64_t MagicBitboard::calculateRookAttacks(uint64_t blockers, int square) const
+{
+    uint64_t attacks = 0ULL;
+    int      file    = square % 8;
+    int      rank    = square / 8;
+
+    for (int f = file + 1; f <= 7; ++f)
+    {
+        int sq = (rank * 8) + f;
+        Bitboard::setBit(attacks, sq);
+        if ((1ULL << sq) & blockers) { break; }
+    }
+
+    for (int f = file - 1; f >= 0; --f)
+    {
+        int sq = (rank * 8) + f;
+        Bitboard::setBit(attacks, sq);
+        if ((1ULL << sq) & blockers) { break; }
+    }
+
+    for (int r = rank + 1; r <= 7; ++r)
+    {
+        int sq = (r * 8) + file;
+        Bitboard::setBit(attacks, sq);
+        if ((1ULL << sq) & blockers) { break; }
+    }
+
+    for (int r = rank - 1; r >= 0; --r)
+    {
+        int sq = (r * 8) + file;
+        Bitboard::setBit(attacks, sq);
+        if ((1ULL << sq) & blockers) { break; }
+    }
+
+    return attacks;
+}
+
+std::vector<uint64_t> MagicBitboard::generateBlockerBitboards(uint64_t mask) const
+{
+    std::vector<uint64_t> blockers;
+    uint64_t              subset = 0ULL;
+
+    blockers.reserve(1ULL << Bitboard::countBits(mask));
+
+    do
+    {
+        blockers.push_back(subset);
+        subset = (subset - mask) & mask;
+    } while (subset);
+
+    return blockers;
+}
+
+void MagicBitboard::generateRookAttackTable()
+{
+    for (int square = 0; square < 64; ++square)
+    {
+        uint64_t mask = calculateRookMask(square);
+
+        rookTable[square].mask    = mask;
+        rookTable[square].magic   = ROOK_MAGIC_NUMBERS[square];
+        rookTable[square].shift   = 64 - ROOK_BITS_SHIFT[square];
+        rookTable[square].attacks = new uint64_t[1 << Bitboard::countBits(mask)];
+
+        std::vector<uint64_t> blockers = generateBlockerBitboards(mask);
+
+        for (uint64_t blocker : blockers)
+        {
+            uint64_t index                   = generateMagicIndex(blocker, square);
+            rookTable[square].attacks[index] = calculateRookAttacks(blocker, square);
+        }
+    }
+}
+
+uint64_t MagicBitboard::generateMagicIndex(uint64_t occupancy, int square) const
+{
+    return ((occupancy & rookTable[square].mask) * rookTable[square].magic) >> rookTable[square].shift;
 }

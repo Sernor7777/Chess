@@ -1,47 +1,44 @@
-#include "config.hpp"
 #include "board.hpp"
+#include "config.hpp"
 #include "texture_loader.hpp"
 #include <iostream>
 #include <memory>
 
-Board::Board(TextureLoader& textureLoader, MagicBitboard& magicBitboard) : textureLoader(textureLoader), magicBitboard(magicBitboard)
+Board::Board(TextureLoader& textureLoader) : textureLoader(textureLoader), magicBitboard(), moveGen(magicBitboard)
 {
     setupBoard();
 }
 
-void Board::setupBoard()
-{
-    readFEN("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR");
-}
+void Board::setupBoard() { readFEN("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR"); }
 
-//void Board::makeMove(int fromFile, int fromRank, int toFile, int toRank, PieceTypes pieceType)
 void Board::makeMove(Move move, PieceTypes pieceType)
 {
-    int fromSquare = move.fromSquare;
-    int toSquare = move.toSquare;
+    int fromSquare = move.from();
+    int toSquare   = move.to();
 
-    if (bitboards[Occupied].isOccupied(toSquare))
+    if (Bitboard::isSet(bitboards[Occupied], toSquare))
     {
         board[toSquare].reset();
-        bitboards[board[fromSquare]->isWhite() ? OccupiedByBlack : OccupiedByWhite].removePiece(toSquare);
+        Bitboard::resetBit(bitboards[board[fromSquare]->isWhite() ? OccupiedByBlack : OccupiedByWhite], toSquare);
     }
 
     board[fromSquare]->move(toSquare % 8, toSquare / 8);
     board[toSquare] = std::move(board[fromSquare]);
 
-    bitboards[Occupied].removePiece(fromSquare);
-    bitboards[Occupied].setPiece(toSquare);
-    bitboards[pieceType].removePiece(fromSquare);
-    bitboards[pieceType].setPiece(toSquare);
+    Bitboard::resetBit(bitboards[Occupied], fromSquare);
+    Bitboard::setBit(bitboards[Occupied], toSquare);
+    Bitboard::resetBit(bitboards[pieceType], fromSquare);
+    Bitboard::setBit(bitboards[pieceType], toSquare);
+
     if (pieceType <= 5)
     {
-        bitboards[OccupiedByWhite].removePiece(fromSquare);
-        bitboards[OccupiedByWhite].setPiece(toSquare);
+        Bitboard::resetBit(bitboards[OccupiedByWhite], fromSquare);
+        Bitboard::setBit(bitboards[OccupiedByWhite], toSquare);
     }
     else
     {
-        bitboards[OccupiedByBlack].removePiece(fromSquare);
-        bitboards[OccupiedByBlack].setPiece(toSquare);
+        Bitboard::resetBit(bitboards[OccupiedByBlack], fromSquare);
+        Bitboard::setBit(bitboards[OccupiedByBlack], toSquare);
     }
 
     legalMoves.clear();
@@ -50,11 +47,11 @@ void Board::makeMove(Move move, PieceTypes pieceType)
 void Board::readFEN(const std::string& FEN)
 {
     int square = 0;
-    int file = 0;
-    int rank = 7;
+    int file   = 0;
+    int rank   = 7;
 
     std::fill(board.begin(), board.end(), nullptr);
-    bitboards.fill(Bitboard());
+    bitboards.fill(0ULL);
 
     for (const char& c : FEN)
     {
@@ -64,51 +61,48 @@ void Board::readFEN(const std::string& FEN)
             if (std::tolower(c) == 'p')
             {
                 board[square] = std::make_unique<Pawn>(std::isupper(c) ? true : false, file, rank, textureLoader);
-                bitboards[std::isupper(c) ? PieceTypes::WhitePawn : PieceTypes::BlackPawn].setPiece(square);
-                bitboards[Occupied].setPiece(square);
-                bitboards[std::isupper(c) ? OccupiedByWhite : OccupiedByBlack].setPiece(square);
+                Bitboard::setBit(bitboards[std::isupper(c) ? PieceTypes::WhitePawn : PieceTypes::BlackPawn], square);
+                Bitboard::setBit(bitboards[Occupied], square);
+                Bitboard::setBit(bitboards[std::isupper(c) ? OccupiedByWhite : OccupiedByBlack], square);
             }
             else if (std::tolower(c) == 'r')
             {
                 board[square] = std::make_unique<Rook>(std::isupper(c) ? true : false, file, rank, textureLoader);
-                bitboards[std::isupper(c) ? PieceTypes::WhiteRook : PieceTypes::BlackRook].setPiece(square);
-                bitboards[Occupied].setPiece(square);
-                bitboards[std::isupper(c) ? OccupiedByWhite : OccupiedByBlack].setPiece(square);
+                Bitboard::setBit(bitboards[std::isupper(c) ? PieceTypes::WhiteRook : PieceTypes::BlackRook], square);
+                Bitboard::setBit(bitboards[Occupied], square);
+                Bitboard::setBit(bitboards[std::isupper(c) ? OccupiedByWhite : OccupiedByBlack], square);
             }
             else if (std::tolower(c) == 'n')
             {
                 board[square] = std::make_unique<Knight>(std::isupper(c) ? true : false, file, rank, textureLoader);
-                bitboards[std::isupper(c) ? PieceTypes::WhiteKnight : PieceTypes::BlackKnight].setPiece(square);
-                bitboards[Occupied].setPiece(square);
-                bitboards[std::isupper(c) ? OccupiedByWhite : OccupiedByBlack].setPiece(square);
+                Bitboard::setBit(bitboards[std::isupper(c) ? PieceTypes::WhiteKnight : PieceTypes::BlackKnight], square);
+                Bitboard::setBit(bitboards[Occupied], square);
+                Bitboard::setBit(bitboards[std::isupper(c) ? OccupiedByWhite : OccupiedByBlack], square);
             }
             else if (std::tolower(c) == 'b')
             {
                 board[square] = std::make_unique<Bishop>(std::isupper(c) ? true : false, file, rank, textureLoader);
-                bitboards[std::isupper(c) ? PieceTypes::WhiteBishop : PieceTypes::BlackBishop].setPiece(square);
-                bitboards[Occupied].setPiece(square);
-                bitboards[std::isupper(c) ? OccupiedByWhite : OccupiedByBlack].setPiece(square);
+                Bitboard::setBit(bitboards[std::isupper(c) ? PieceTypes::WhiteBishop : PieceTypes::BlackBishop], square);
+                Bitboard::setBit(bitboards[Occupied], square);
+                Bitboard::setBit(bitboards[std::isupper(c) ? OccupiedByWhite : OccupiedByBlack], square);
             }
             else if (std::tolower(c) == 'q')
             {
                 board[square] = std::make_unique<Queen>(std::isupper(c) ? true : false, file, rank, textureLoader);
-                bitboards[std::isupper(c) ? PieceTypes::WhiteQueen : PieceTypes::BlackQueen].setPiece(square);
-                bitboards[Occupied].setPiece(square);
-                bitboards[std::isupper(c) ? OccupiedByWhite : OccupiedByBlack].setPiece(square);
+                Bitboard::setBit(bitboards[std::isupper(c) ? PieceTypes::WhiteQueen : PieceTypes::BlackQueen], square);
+                Bitboard::setBit(bitboards[Occupied], square);
+                Bitboard::setBit(bitboards[std::isupper(c) ? OccupiedByWhite : OccupiedByBlack], square);
             }
             else if (std::tolower(c) == 'k')
             {
                 board[square] = std::make_unique<King>(std::isupper(c) ? true : false, file, rank, textureLoader);
-                bitboards[std::isupper(c) ? PieceTypes::WhiteKing : PieceTypes::BlackKing].setPiece(square);
-                bitboards[Occupied].setPiece(square);
-                bitboards[std::isupper(c) ? OccupiedByWhite : OccupiedByBlack].setPiece(square);
+                Bitboard::setBit(bitboards[std::isupper(c) ? PieceTypes::WhiteKing : PieceTypes::BlackKing], square);
+                Bitboard::setBit(bitboards[Occupied], square);
+                Bitboard::setBit(bitboards[std::isupper(c) ? OccupiedByWhite : OccupiedByBlack], square);
             }
             file++;
         }
-        else if (std::isalnum(c))
-        {
-            file += c - '0';
-        }
+        else if (std::isalnum(c)) { file += c - '0'; }
         else
         {
             file = 0;
@@ -127,20 +121,19 @@ void Board::displayBoard(sf::RenderWindow& window, TextureLoader& textureLoader)
         square.setFillColor((file + rank) % 2 == 0 ? sf::Color(235, 236, 208) : sf::Color(115, 149, 82));
         for (const Move& move : legalMoves)
         {
-            if ((8 * (7 - rank)) + file == move.toSquare)
+            if ((8 * (7 - rank)) + file == move.to())
             {
                 square.setFillColor((file + rank) % 2 == 0 ? sf::Color(235, 125, 106) : sf::Color(211, 108, 80));
             }
         }
 
-        square.setPosition(sf::Vector2f(50 + (file * config::SQUARE_SIZE), (config::WINDOW_HEIGHT - (8 * config::SQUARE_SIZE)) / 2 + (rank * config::SQUARE_SIZE)));
+        square.setPosition(
+            sf::Vector2f(50 + (file * config::SQUARE_SIZE),
+                         (config::WINDOW_HEIGHT - (8 * config::SQUARE_SIZE)) / 2 + (rank * config::SQUARE_SIZE)));
         window.draw(square);
 
         std::unique_ptr<Piece>& piece = board[i];
-        if (piece == nullptr)
-        {
-            continue;
-        }
+        if (piece == nullptr) { continue; }
         if (draggedPiece != piece.get())
         {
             piece->getSprite().setPosition(square.getPosition());
@@ -148,10 +141,7 @@ void Board::displayBoard(sf::RenderWindow& window, TextureLoader& textureLoader)
         }
         // drawHitbox(window, piece->getSprite());
     }
-    if (draggedPiece != nullptr)
-    {
-        window.draw(draggedPiece->getSprite());
-    }
+    if (draggedPiece != nullptr) { window.draw(draggedPiece->getSprite()); }
 }
 
 void Board::handleInput(sf::RenderWindow& window, sf::Event& event)
@@ -161,42 +151,37 @@ void Board::handleInput(sf::RenderWindow& window, sf::Event& event)
     {
         for (auto& piece : board)
         {
-            if (piece == nullptr)
-            {
-                continue;
-            }
+            if (piece == nullptr) { continue; }
 
             sf::FloatRect boundingBox = piece->getSprite().getGlobalBounds();
-            if (boundingBox.contains(static_cast<float>(mousePosition.x), static_cast<float>(mousePosition.y)) && draggedPiece == nullptr)
+            if (boundingBox.contains(static_cast<float>(mousePosition.x), static_cast<float>(mousePosition.y))
+                && draggedPiece == nullptr)
             {
                 draggedPiece = piece.get();
-                legalMoves = draggedPiece->getLegalMoves(*this);
+                legalMoves   = draggedPiece->getLegalMoves(*this, moveGen);
             }
 
             if (draggedPiece != nullptr)
             {
-                draggedPiece->getSprite().setPosition(static_cast<sf::Vector2f>(mousePosition) - sf::Vector2f(draggedPiece->getSprite().getGlobalBounds().width / 2, draggedPiece->getSprite().getGlobalBounds().height / 2));
+                draggedPiece->getSprite().setPosition(
+                    static_cast<sf::Vector2f>(mousePosition)
+                    - sf::Vector2f(draggedPiece->getSprite().getGlobalBounds().width / 2,
+                                   draggedPiece->getSprite().getGlobalBounds().height / 2));
             }
         }
     }
     else if (event.type == sf::Event::MouseButtonReleased && event.mouseButton.button == sf::Mouse::Left)
     {
-        if (draggedPiece == nullptr)
-        {
-            return;
-        }
+        if (draggedPiece == nullptr) { return; }
 
-        int targetRank = ((mousePosition.y - ((config::WINDOW_HEIGHT - (8 * config::SQUARE_SIZE)) / 2)) / config::SQUARE_SIZE);
-        targetRank = 7 - targetRank;
+        int targetRank =
+            ((mousePosition.y - ((config::WINDOW_HEIGHT - (8 * config::SQUARE_SIZE)) / 2)) / config::SQUARE_SIZE);
+        targetRank     = 7 - targetRank;
         int targetFile = (mousePosition.x - 50) / config::SQUARE_SIZE;
-        //legalMoves = draggedPiece->getLegalMoves(*this);
+        // legalMoves = draggedPiece->getLegalMoves(*this);
         for (const Move& move : legalMoves)
         {
-            if (move.toSquare == (8 * (targetRank)) + targetFile)
-            {
-                //makeMove(draggedPiece->getPosition().file, draggedPiece->getPosition().rank, targetFile, targetRank, draggedPiece->getType());
-                makeMove(move, draggedPiece->getType());
-            }
+            if (move.to() == (8 * (targetRank)) + targetFile) { makeMove(move, draggedPiece->getType()); }
         }
 
         legalMoves.clear();
@@ -204,24 +189,11 @@ void Board::handleInput(sf::RenderWindow& window, sf::Event& event)
     }
 }
 
-std::array<Bitboard, 17>& Board::getBitboards()
-{
-    return bitboards;
-}
-
-std::array<uint64_t, 64>& Board::getRookMagicNumbers()
-{
-    return magicBitboard.getRookMagicNumbers();
-}
-
-std::array<uint64_t, 64>& Board::getBishopMagicNumbers()
-{
-    return magicBitboard.getBishopMagicNumbers();
-}
+std::array<uint64_t, 17>& Board::getBitboards() { return bitboards; }
 
 void Board::drawHitbox(sf::RenderWindow& window, const sf::Sprite& sprite)
 {
-    sf::FloatRect bounds = sprite.getGlobalBounds();
+    sf::FloatRect      bounds = sprite.getGlobalBounds();
     sf::RectangleShape hitbox(sf::Vector2f(bounds.width, bounds.height));
 
     hitbox.setPosition(bounds.left, bounds.top);

@@ -1,19 +1,16 @@
 #pragma once
 
 #include <cstdint>
-#include <bitset>
+#include <immintrin.h>
 
-class Bitboard
+namespace Bitboard
 {
-public:
-    Bitboard() : board(0) {};
+inline void setBit(uint64_t& bitboard, int index) { bitboard |= 1ULL << index; }
+inline void resetBit(uint64_t& bitboard, int index) { bitboard &= ~(1ULL << index); }
+inline bool isSet(uint64_t bitboard, int index) { return (bitboard & (1ULL << index)) != 0; }
+inline int  countBits(uint64_t bitboard) { return _mm_popcnt_u64(bitboard); }
+inline int  getLSB(uint64_t bitboard) { return _tzcnt_u64(bitboard); }
+int         getBitPosition(uint64_t bitboard, int bitIndex);
 
-    void setPiece(int square);
-    void removePiece(int square);
-    bool isOccupied(int square);
-    void print();
-
-private:
-    //std::bitset<64> board{};
-    uint64_t board;
-};
+void print(uint64_t bitboard);
+}  // namespace Bitboard

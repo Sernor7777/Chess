@@ -23,6 +23,14 @@ file(GLOB_RECURSE SOURCES src/*.cpp)
 # Include header files
 include_directories(include)
 
+if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+    add_compile_options(-msse4.2)
+elseif(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
+    add_compile_options(/arch:SSE2) # SSE4.2 is included with /arch:SSE2 on modern MSVC
+endif()
+
+add_compile_options(-mbmi)
+
 # Create the executable target (Chess)
 add_executable(${PROJECT_NAME} ${SOURCES})
 target_link_libraries(${PROJECT_NAME} PRIVATE sfml-graphics)

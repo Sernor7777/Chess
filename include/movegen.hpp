@@ -4,24 +4,20 @@
 
 #include "move.hpp"
 #include "bitboard.hpp"
-
-
+#include "magic_bitboard.hpp"
 
 class Board;
 
 class MoveGen
 {
 public:
-    static std::vector<Move> generatePawnMoves(Board& board, bool isWhite);
-    static std::vector<Move> generateKnightMoves(Board& board, bool isWhite);
-    static std::vector<Move> generateKingMoves(Board& board, bool isWhite);
+    MoveGen(const MagicBitboard& magicBitboard) : magicBitboard(magicBitboard) {};
 
-    static std::vector<Move> generateHorizontalSlidingMoves(Board& board, bool isWhite);
-
-    //static Bitboard rookAttacks(int square, Board& board);
+    std::vector<Move> generatePawnMoves(Board& board, bool isWhite);
+    std::vector<Move> generateKnightMoves(Board& board, bool isWhite);
+    std::vector<Move> generateKingMoves(Board& board, bool isWhite);
+    std::vector<Move> generateRookMoves(Board& board, int square, bool isWhite);
 
 private:
-    static std::vector<Move> legalMoves;
-
-    
+    const MagicBitboard& magicBitboard;
 };

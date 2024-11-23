@@ -11,7 +11,7 @@ class TextureLoader
 {
 public:
     TextureLoader();
-    
+
     sf::Texture& getTexture(const char* textureName);
 
 private:
