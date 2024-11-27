@@ -38,8 +38,8 @@ public:
     MagicBitboard();
 
     uint64_t getRookAttacks(uint64_t occupancy, int square) const;
-    uint64_t getBishopAttacks(int square, uint64_t occupancy) const;
-    uint64_t getQueenAttacks(int square, uint64_t occupancy) const;
+    uint64_t getBishopAttacks(uint64_t occupancy, int square) const;
+    uint64_t getQueenAttacks(uint64_t occupancy, int square) const;
 
 private:
     static const std::array<uint64_t, 64> ROOK_MAGIC_NUMBERS;
@@ -48,14 +48,19 @@ private:
     static const std::array<int, 64>      BISHOP_BITS_SHIFT;
 
     std::array<Magic, 64> rookTable;
+    std::array<Magic, 64> bishopTable;
 
     void     generateRookAttackTable();
+    void     generateBishopAttackTable();
     uint64_t calculateRookAttacks(uint64_t blockers, int square) const;
+    uint64_t calculateBishopAttacks(uint64_t blockers, int square) const;
     uint64_t calculateRookMask(int square) const;
-
-    uint64_t generateMagicIndex(uint64_t occupancy, int square) const;
+    uint64_t calculateBishopMask(int square) const;
 
     std::vector<uint64_t> generateBlockerBitboards(uint64_t mask) const;
+
+    uint64_t generateRookMagicIndex(uint64_t occupancy, int square) const;
+    uint64_t generateBishopMagicIndex(uint64_t occupancy, int square) const;
 
     //void findMagicNumbers();
 };

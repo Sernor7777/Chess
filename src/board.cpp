@@ -9,7 +9,11 @@ Board::Board(TextureLoader& textureLoader) : textureLoader(textureLoader), magic
     setupBoard();
 }
 
-void Board::setupBoard() { readFEN("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR"); }
+void Board::setupBoard()
+{
+    readFEN("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR");
+    getLegalMoves();
+}
 
 void Board::makeMove(Move move, PieceTypes pieceType)
 {
@@ -41,7 +45,7 @@ void Board::makeMove(Move move, PieceTypes pieceType)
         Bitboard::setBit(bitboards[OccupiedByBlack], toSquare);
     }
 
-    legalMoves.clear();
+    getLegalMoves();
 }
 
 void Board::readFEN(const std::string& FEN)
@@ -119,11 +123,15 @@ void Board::displayBoard(sf::RenderWindow& window, TextureLoader& textureLoader)
         int file = i % 8;
         int rank = 7 - (i / 8);
         square.setFillColor((file + rank) % 2 == 0 ? sf::Color(235, 236, 208) : sf::Color(115, 149, 82));
-        for (const Move& move : legalMoves)
+        if (draggedPiece)
         {
-            if ((8 * (7 - rank)) + file == move.to())
+            for (const Move& move : legalMoves)
             {
-                square.setFillColor((file + rank) % 2 == 0 ? sf::Color(235, 125, 106) : sf::Color(211, 108, 80));
+                if ((8 * (7 - rank)) + file == move.to()
+                    && draggedPiece->getPosition().rank * 8 + draggedPiece->getPosition().file == move.from())
+                {
+                    square.setFillColor((file + rank) % 2 == 0 ? sf::Color(235, 125, 106) : sf::Color(211, 108, 80));
+                }
             }
         }
 
@@ -149,7 +157,7 @@ void Board::handleInput(sf::RenderWindow& window, sf::Event& event)
     sf::Vector2i mousePosition = sf::Mouse::getPosition(window);
     if (sf::Mouse::isButtonPressed(sf::Mouse::Left))
     {
-        for (auto& piece : board)
+        for (const auto& piece : board)
         {
             if (piece == nullptr) { continue; }
 
@@ -158,7 +166,6 @@ void Board::handleInput(sf::RenderWindow& window, sf::Event& event)
                 && draggedPiece == nullptr)
             {
                 draggedPiece = piece.get();
-                legalMoves   = draggedPiece->getLegalMoves(*this, moveGen);
             }
 
             if (draggedPiece != nullptr)
@@ -178,13 +185,15 @@ void Board::handleInput(sf::RenderWindow& window, sf::Event& event)
             ((mousePosition.y - ((config::WINDOW_HEIGHT - (8 * config::SQUARE_SIZE)) / 2)) / config::SQUARE_SIZE);
         targetRank     = 7 - targetRank;
         int targetFile = (mousePosition.x - 50) / config::SQUARE_SIZE;
-        // legalMoves = draggedPiece->getLegalMoves(*this);
         for (const Move& move : legalMoves)
         {
-            if (move.to() == (8 * (targetRank)) + targetFile) { makeMove(move, draggedPiece->getType()); }
+            if (move.to() == (8 * (targetRank)) + targetFile
+                && draggedPiece->getPosition().rank * 8 + draggedPiece->getPosition().file == move.from())
+            {
+                makeMove(move, draggedPiece->getType());
+            }
         }
 
-        legalMoves.clear();
         draggedPiece = nullptr;
     }
 }
@@ -201,4 +210,18 @@ void Board::drawHitbox(sf::RenderWindow& window, const sf::Sprite& sprite)
     hitbox.setOutlineThickness(1);
     hitbox.setFillColor(sf::Color::Transparent);
     window.draw(hitbox);
+}
+
+void Board::getLegalMoves()
+{
+    legalMoves.clear();
+
+    for (const auto& piece : board)
+    {
+        if (piece)
+        {
+            std::vector<Move> moves = piece->getLegalMoves(*this, moveGen);
+            legalMoves.insert(legalMoves.end(), moves.begin(), moves.end());
+        }
+    }
 }

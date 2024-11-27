@@ -1,4 +1,5 @@
 #include "magic_bitboard.hpp"
+#include <unordered_map>
 #include <iostream>
 
 const std::array<uint64_t, 64> MagicBitboard::ROOK_MAGIC_NUMBERS = {
@@ -17,19 +18,19 @@ const std::array<uint64_t, 64> MagicBitboard::ROOK_MAGIC_NUMBERS = {
     0x4003000230480005ULL, 0xc101000208040001ULL, 0x8421001080084ULL,    0x1120502084010052ULL};
 
 const std::array<uint64_t, 64> MagicBitboard::BISHOP_MAGIC_NUMBERS = {
-    0x1841160051a00401ULL, 0x202000012224a02ULL,  0x284003005412542ULL,  0x2800a220c40502ULL,   0x68005050040308ULL,
-    0x440802c810020230ULL, 0x240034002014417ULL,  0x45202411310208aULL,  0x1a08410602016172ULL, 0x830464044100e08ULL,
-    0x411a31a010040808ULL, 0x200124000484405ULL,  0x60020c80000120aULL,  0x6a001002583420aULL,  0x10082020084c0051ULL,
-    0x1325202008030692ULL, 0x2002026a00045020ULL, 0x41051c000052122cULL, 0x10200b000100803ULL,  0x720204000610032ULL,
-    0x6818603041604002ULL, 0x1041040010020001ULL, 0x301081420025204ULL,  0x42024420826001ULL,   0x404304000131801ULL,
-    0x1041090c00842100ULL, 0x144110020080240ULL,  0x1211004002202008ULL, 0x105080000500401ULL,  0x2080600c62080131ULL,
-    0x844100114022082ULL,  0x841080020804b00ULL,  0x8240800080210ULL,    0x4002144012084210ULL, 0x2052000060904ULL,
-    0x88400420500c14ULL,   0x434000204404ULL,     0x1840240800212081ULL, 0x4208c019244184ULL,   0x54da10030841ULL,
-    0x1200090011080a02ULL, 0x800140c000414c8ULL,  0x4400382000401058ULL, 0x100020140000105ULL,  0x610040040044421ULL,
-    0x20001202848110aULL,  0x222011010300101ULL,  0x106608008012304ULL,  0x220429002014a02ULL,  0x110800a005104208ULL,
-    0x806201048200111ULL,  0x2082008a03000802ULL, 0x2041008034011420ULL, 0x401006005004434ULL,  0x90a429004080204ULL,
-    0x2041040950041802ULL, 0x1002200028441145ULL, 0x109004012802018aULL, 0x65100405500801ULL,   0x284240458180a00ULL,
-    0x2002441020024020ULL, 0x4a10110101144112ULL, 0x1010a2c00005030ULL,  0x40c012121020424ULL};
+    0x40106000A1160020ULL, 0x20010250810120ULL,   0x2010010220280081ULL, 0x2806004050C040ULL,   0x2021018000000ULL,
+    0x2001112010000400ULL, 0x881010120218080ULL,  0x1030820110010500ULL, 0x120222042400ULL,     0x2000020404040044ULL,
+    0x8000480094208000ULL, 0x3422A02000001ULL,    0xA220210100040ULL,    0x8004820202226000ULL, 0x18234854100800ULL,
+    0x100004042101040ULL,  0x4001004082820ULL,    0x10000810010048ULL,   0x1014004208081300ULL, 0x2080818802044202ULL,
+    0x40880C00A00100ULL,   0x80400200522010ULL,   0x1000188180B04ULL,    0x80249202020204ULL,   0x1004400004100410ULL,
+    0x13100A0022206ULL,    0x2148500001040080ULL, 0x4241080011004300ULL, 0x4020848004002000ULL, 0x10101380D1004100ULL,
+    0x8004422020284ULL,    0x1010A1041008080ULL,  0x808080400082121ULL,  0x808080400082121ULL,  0x91128200100C00ULL,
+    0x202200802010104ULL,  0x8C0A020200440085ULL, 0x1A0008080B10040ULL,  0x889520080122800ULL,  0x100902022202010AULL,
+    0x4081A0816002000ULL,  0x681208005000ULL,     0x8170840041008802ULL, 0xA00004200810805ULL,  0x830404408210100ULL,
+    0x2602208106006102ULL, 0x1048300680802628ULL, 0x2602208106006102ULL, 0x602010120110040ULL,  0x941010801043000ULL,
+    0x40440A210428ULL,     0x8240020880021ULL,    0x400002012048200ULL,  0xAC102001210220ULL,   0x220021002009900ULL,
+    0x84440C080A013080ULL, 0x1008044200440ULL,    0x4C04410841000ULL,    0x2000500104011130ULL, 0x1A0C010011C20229ULL,
+    0x44800112202200ULL,   0x434804908100424ULL,  0x300404822C08200ULL,  0x48081010008A2A80ULL};
 
 const std::array<int, 64> MagicBitboard::ROOK_BITS_SHIFT = {12, 11, 11, 11, 11, 11, 11, 12, 11, 10, 10, 10, 10, 10, 10, 11,
                                                             11, 10, 10, 10, 10, 10, 10, 11, 11, 10, 10, 10, 10, 10, 10, 11,
@@ -40,14 +41,32 @@ const std::array<int, 64> MagicBitboard::BISHOP_BITS_SHIFT = {
     6, 5, 5, 5, 5, 5, 5, 6, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 7, 7, 7, 7, 5, 5, 5, 5, 7, 9, 9, 7, 5, 5,
     5, 5, 7, 9, 9, 7, 5, 5, 5, 5, 7, 7, 7, 7, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 6, 5, 5, 5, 5, 5, 5, 6};
 
-MagicBitboard::MagicBitboard() { generateRookAttackTable(); }
+MagicBitboard::MagicBitboard()
+{
+    generateRookAttackTable();
+    generateBishopAttackTable();
+}
 
 uint64_t MagicBitboard::getRookAttacks(uint64_t occupancy, int square) const
 {
-    uint64_t index   = generateMagicIndex(occupancy, square);
-    uint64_t attacks = rookTable[square].attacks[index];
+    uint64_t index = generateRookMagicIndex(occupancy, square);
 
     return rookTable[square].attacks[index];
+}
+
+uint64_t MagicBitboard::getBishopAttacks(uint64_t occupancy, int square) const
+{
+    uint64_t index = generateBishopMagicIndex(occupancy, square);
+
+    return bishopTable[square].attacks[index];
+}
+
+uint64_t MagicBitboard::getQueenAttacks(uint64_t occupancy, int square) const
+{
+    uint64_t rookIndex   = generateRookMagicIndex(occupancy, square);
+    uint64_t bishopIndex = generateBishopMagicIndex(occupancy, square);
+
+    return bishopTable[square].attacks[bishopIndex] | rookTable[square].attacks[rookIndex];
 }
 
 uint64_t MagicBitboard::calculateRookMask(int square) const
@@ -147,13 +166,105 @@ void MagicBitboard::generateRookAttackTable()
 
         for (uint64_t blocker : blockers)
         {
-            uint64_t index                   = generateMagicIndex(blocker, square);
+            uint64_t index                   = generateRookMagicIndex(blocker, square);
             rookTable[square].attacks[index] = calculateRookAttacks(blocker, square);
         }
     }
 }
 
-uint64_t MagicBitboard::generateMagicIndex(uint64_t occupancy, int square) const
+void MagicBitboard::generateBishopAttackTable()
+{
+    for (int square = 0; square < 64; ++square)
+    {
+        uint64_t mask = calculateBishopMask(square);
+
+        bishopTable[square].mask    = mask;
+        bishopTable[square].magic   = BISHOP_MAGIC_NUMBERS[square];
+        bishopTable[square].shift   = 64 - BISHOP_BITS_SHIFT[square];
+        bishopTable[square].attacks = new uint64_t[1 << Bitboard::countBits(mask)];
+
+        std::vector<uint64_t> blockers = generateBlockerBitboards(mask);
+
+        for (uint64_t blocker : blockers)
+        {
+            uint64_t index                     = generateBishopMagicIndex(blocker, square);
+            bishopTable[square].attacks[index] = calculateBishopAttacks(blocker, square);
+        }
+    }
+}
+
+uint64_t MagicBitboard::generateRookMagicIndex(uint64_t occupancy, int square) const
 {
     return ((occupancy & rookTable[square].mask) * rookTable[square].magic) >> rookTable[square].shift;
+}
+
+uint64_t MagicBitboard::generateBishopMagicIndex(uint64_t occupancy, int square) const
+{
+    return ((occupancy & bishopTable[square].mask) * bishopTable[square].magic) >> bishopTable[square].shift;
+}
+
+uint64_t MagicBitboard::calculateBishopAttacks(uint64_t blockers, int square) const
+{
+    uint64_t attacks = 0ULL;
+    int      file    = square % 8;
+    int      rank    = square / 8;
+
+    for (int f = file + 1, r = rank + 1; f <= 7 && r <= 7; ++f, ++r)
+    {
+        int sq = (r * 8) + f;
+        Bitboard::setBit(attacks, sq);
+        if ((1ULL << sq) & blockers) { break; }
+    }
+
+    for (int f = file + 1, r = rank - 1; f <= 7 && r >= 0; ++f, --r)
+    {
+        int sq = (r * 8) + f;
+        Bitboard::setBit(attacks, sq);
+        if ((1ULL << sq) & blockers) { break; }
+    }
+
+    for (int f = file - 1, r = rank + 1; f >= 0 && r <= 7; --f, ++r)
+    {
+        int sq = (r * 8) + f;
+        Bitboard::setBit(attacks, sq);
+        if ((1ULL << sq) & blockers) { break; }
+    }
+
+    for (int f = file - 1, r = rank - 1; f >= 0 && r >= 0; --f, --r)
+    {
+        int sq = (r * 8) + f;
+        Bitboard::setBit(attacks, sq);
+        if ((1ULL << sq) & blockers) { break; }
+    }
+
+    return attacks;
+}
+
+uint64_t MagicBitboard::calculateBishopMask(int square) const
+{
+    uint64_t mask = 0ULL;
+    int      file = square % 8;
+    int      rank = square / 8;
+
+    for (int f = file + 1, r = rank + 1; f < 7 && r < 7; ++f, ++r)
+    {
+        Bitboard::setBit(mask, (r * 8) + f);
+    }
+
+    for (int f = file + 1, r = rank - 1; f < 7 && r > 0; ++f, --r)
+    {
+        Bitboard::setBit(mask, (r * 8) + f);
+    }
+
+    for (int f = file - 1, r = rank + 1; f > 0 && r < 7; --f, ++r)
+    {
+        Bitboard::setBit(mask, (r * 8) + f);
+    }
+
+    for (int f = file - 1, r = rank - 1; f > 0 && r > 0; --f, --r)
+    {
+        Bitboard::setBit(mask, (r * 8) + f);
+    }
+
+    return mask;
 }

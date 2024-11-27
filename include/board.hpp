@@ -35,7 +35,7 @@ public:
     void                      handleInput(sf::RenderWindow& window, sf::Event& event);
     std::array<uint64_t, 64>& getRookMagicNumbers();
     std::array<uint64_t, 64>& getBishopMagicNumbers();
-    // std::vector<Move> getLegalMoves();
+    void                      getLegalMoves();
     // SquareStatus getSquareStatus(int rank, int file, bool isWhite);
 
     std::array<uint64_t, 17>& getBitboards();

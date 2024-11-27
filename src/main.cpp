@@ -16,7 +16,7 @@ int main()
     // board.readFEN("5r2/3R4/6pk/1r5p/3P1B2/4P1P1/5P1P/1N3RK1");
 
     sf::RenderWindow window(sf::VideoMode(config::WINDOW_WIDTH, config::WINDOW_HEIGHT), "Chess");
-    window.setFramerateLimit(50);
+    window.setFramerateLimit(60);
 
     while (window.isOpen())
     {
