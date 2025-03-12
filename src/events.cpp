@@ -1,6 +1,8 @@
 #include "events.hpp"
 
-void processEvents(sf::RenderWindow& window, Board& board)
+namespace Events
+{
+void processEvents(sf::RenderWindow& window, ChessGUI& chessGUI)
 {
     sf::Event event;
     while (window.pollEvent(event))
@@ -10,6 +12,7 @@ void processEvents(sf::RenderWindow& window, Board& board)
         {
             if (event.key.code == sf::Keyboard::Escape) { window.close(); }
         }
-        board.handleInput(window, event);
+        chessGUI.handleInput(window, event);
     }
 }
+}  // namespace Events

@@ -1,240 +1,155 @@
 #include <iostream>
+#include <cassert>
 
-#include "board.hpp"
 #include "movegen.hpp"
 
-MoveGen::MoveGen(const MagicBitboard& magicBitboard) : magicBitboard(magicBitboard)
+void MoveGen::generatePawnMoves(const Position& position, Square square, Color side, std::vector<Move>& moves) const
 {
-    generateKnightAttackTable();
-    generateKingAttackTable();
-}
+    const int DIR              = side ? -1 : 1;
+    const int SINGLE_PUSH      = 8 * DIR + square;
+    const int DOUBLE_PUSH      = 16 * DIR + square;
+    const int CAPTURE_OFFSET_7 = 7 * DIR + square;
+    const int CAPTURE_OFFSET_9 = 9 * DIR + square;
 
-std::vector<Move> MoveGen::generatePawnMoves(Board& board, bool isWhite)
-{
-    std::vector<Move> legalMoves;
-    uint64_t          occupiedBitboard   = board.getBitboards()[Occupied];
-    uint64_t          occupiedByOpponent = board.getBitboards()[isWhite ? OccupiedByBlack : OccupiedByWhite];
+    uint64_t occupancy      = position.getPieceBitboard(ALL_PIECES);
+    uint64_t enemyOccupancy = position.getPieceBitboard(ALL_PIECES, static_cast<Color>(1 - side));
+    File     file           = static_cast<File>(square % 8);
+    Rank     rank           = static_cast<Rank>(square / 8);
 
-    for (int square = 0; square < 64; square++)
+    if (rank != (side ? RANK_2 : RANK_7))
     {
-        int file = square % 8;
-        int rank = square / 8;
+        Square enPassantSquare = position.getEnPassantSquare();
 
-        if (!Bitboard::isSet(occupiedBitboard, square)) { continue; }
-
-        if (isWhite)
+        if (file != (side ? FILE_H : FILE_A) && Bitboard::isSet(enemyOccupancy, CAPTURE_OFFSET_7))
         {
-            if (rank == 1 && !Bitboard::isSet(occupiedBitboard, square + 8)
-                && !Bitboard::isSet(occupiedBitboard, square + 16))
+            moves.emplace_back(square, static_cast<Square>(CAPTURE_OFFSET_7));
+        }
+        else if (file != (side ? FILE_H : FILE_A) && !Bitboard::isSet(enemyOccupancy, CAPTURE_OFFSET_7)
+                 && CAPTURE_OFFSET_7 == enPassantSquare)
+        {
+            moves.emplace_back(square, static_cast<Square>(CAPTURE_OFFSET_7), Move::EN_PASSANT);
+        }
+        if (!Bitboard::isSet(occupancy, SINGLE_PUSH))
+        {
+            moves.emplace_back(square, static_cast<Square>(SINGLE_PUSH));
+            if (rank == (side ? RANK_7 : RANK_2) && !Bitboard::isSet(occupancy, DOUBLE_PUSH))
             {
-                legalMoves.push_back(Move{square, square + 16});
-            }
-            if (rank < 6)
-            {
-                if (!Bitboard::isSet(occupiedBitboard, square + 8)) { legalMoves.push_back(Move{square, square + 8}); }
-                if (Bitboard::isSet(occupiedByOpponent, square + 7) && file != 0)
-                {
-                    legalMoves.push_back(Move{square, square + 7});
-                }
-                if (Bitboard::isSet(occupiedByOpponent, square + 9) && file != 7)
-                {
-                    legalMoves.push_back(Move{square, square + 9});
-                }
+                moves.emplace_back(square, static_cast<Square>(DOUBLE_PUSH));
             }
         }
-        else
+        if (file != (side ? FILE_A : FILE_H) && Bitboard::isSet(enemyOccupancy, CAPTURE_OFFSET_9))
         {
-            if (rank == 6 && !Bitboard::isSet(occupiedBitboard, square - 8)
-                && !Bitboard::isSet(occupiedBitboard, square - 16))
-            {
-                legalMoves.push_back(Move{square, square - 16});
-            }
-            if (rank > 1)
-            {
-                if (!Bitboard::isSet(occupiedBitboard, square - 8)) { legalMoves.push_back(Move{square, square - 8}); }
-                if (Bitboard::isSet(occupiedByOpponent, square - 7) && file != 7)
-                {
-                    legalMoves.push_back(Move{square, square - 7});
-                }
-                if (Bitboard::isSet(occupiedByOpponent, square - 9) && file != 0)
-                {
-                    legalMoves.push_back(Move{square, square - 9});
-                }
-            }
+            moves.emplace_back(square, static_cast<Square>(CAPTURE_OFFSET_9));
+        }
+        else if (file != (side ? FILE_A : FILE_H) && !Bitboard::isSet(enemyOccupancy, CAPTURE_OFFSET_9)
+                 && CAPTURE_OFFSET_9 == enPassantSquare)
+        {
+            moves.emplace_back(square, static_cast<Square>(CAPTURE_OFFSET_9), Move::EN_PASSANT);
         }
     }
-
-    return legalMoves;
-}
-
-std::vector<Move> MoveGen::generateKnightMoves(Board& board, int square, bool isWhite) const
-{
-    std::vector<Move> legalMoves;
-
-    uint64_t occupancy = board.getBitboards()[Occupied];
-    uint64_t attacks   = knightTable[square];
-
-    attacks &= ~board.getBitboards()[isWhite ? OccupiedByWhite : OccupiedByBlack];
-
-    while (attacks)
+    else
     {
-        int            toSquare = Bitboard::getLSB(attacks);
-        Move::MoveType type     = Bitboard::isSet(occupancy, toSquare) ? Move::CAPTURE : Move::NORMAL;
-        legalMoves.emplace_back(Move{square, toSquare, type});
-        attacks &= attacks - 1;
-    }
+        auto addPromotions = [](Square square, Square to, std::vector<Move>& moves) {
+            moves.emplace_back(square, to, Move::PROMOTION, ROOK);
+            moves.emplace_back(square, to, Move::PROMOTION, KNIGHT);
+            moves.emplace_back(square, to, Move::PROMOTION, BISHOP);
+            moves.emplace_back(square, to, Move::PROMOTION, QUEEN);
+        };
 
-    // for (int square = 0; square < 64; square++)
-    // {
-    //     int file = square % 8;
-    //     int rank = square / 8;
-
-    //     if (!Bitboard::isSet(occupiedBitboard, square)) { continue; }
-
-    //     for (const int offset : knightOffsets)
-    //     {
-    //         int targetSquare = square + offset;
-
-    //         int fileDiff = std::abs((targetSquare % 8) - file);
-    //         int rankDiff = std::abs((targetSquare / 8) - rank);
-
-    //         if (targetSquare < 0 || targetSquare > 63) { continue; }
-
-    //         if (!Bitboard::isSet(occupiedSameColor, targetSquare)
-    //             && ((fileDiff == 1 && rankDiff == 2) || (fileDiff == 2 && rankDiff == 1)))
-    //         {
-    //             legalMoves.push_back(Move{square, targetSquare});
-    //         }
-    //     }
-    // }
-
-
-    return legalMoves;
-}
-
-std::vector<Move> MoveGen::generateKingMoves(Board& board, int square, bool isWhite) const
-{
-    std::vector<Move> legalMoves;
-
-    uint64_t occupancy = board.getBitboards()[Occupied];
-    uint64_t attacks   = kingTable[square];
-
-    attacks &= ~board.getBitboards()[isWhite ? OccupiedByWhite : OccupiedByBlack];
-
-    while (attacks)
-    {
-        int            toSquare = Bitboard::getLSB(attacks);
-        Move::MoveType type     = Bitboard::isSet(occupancy, toSquare) ? Move::CAPTURE : Move::NORMAL;
-        legalMoves.emplace_back(Move{square, toSquare, type});
-        attacks &= attacks - 1;
-    }
-
-    return legalMoves;
-}
-
-std::vector<Move> MoveGen::generateRookMoves(Board& board, int square, bool isWhite) const
-{
-    std::vector<Move> legalMoves;
-    uint64_t          occupancy = board.getBitboards()[Occupied];
-    uint64_t          attacks   = magicBitboard.getRookAttacks(occupancy, square);
-
-    attacks &= ~board.getBitboards()[isWhite ? OccupiedByWhite : OccupiedByBlack];
-
-    legalMoves.reserve(Bitboard::countBits(attacks));
-
-    while (attacks)
-    {
-        int            toSquare  = Bitboard::getLSB(attacks);
-        bool           isCapture = Bitboard::isSet(occupancy, toSquare);
-        Move::MoveType type      = isCapture ? Move::CAPTURE : Move::NORMAL;
-        legalMoves.emplace_back(Move{square, toSquare, type});
-        attacks &= attacks - 1;
-    }
-
-    return legalMoves;
-}
-
-std::vector<Move> MoveGen::generateBishopMoves(Board& board, int square, bool isWhite) const
-{
-    std::vector<Move> legalMoves;
-    uint64_t          occupancy = board.getBitboards()[Occupied];
-    uint64_t          attacks   = magicBitboard.getBishopAttacks(occupancy, square);
-
-    attacks &= ~board.getBitboards()[isWhite ? OccupiedByWhite : OccupiedByBlack];
-
-    legalMoves.reserve(Bitboard::countBits(attacks));
-
-    while (attacks)
-    {
-        int            toSquare = Bitboard::getLSB(attacks);
-        Move::MoveType type     = Bitboard::isSet(occupancy, toSquare) ? Move::CAPTURE : Move::NORMAL;
-        legalMoves.emplace_back(Move{square, toSquare, type});
-        attacks &= attacks - 1;
-    }
-
-    return legalMoves;
-}
-
-std::vector<Move> MoveGen::generateQueenMoves(Board& board, int square, bool isWhite) const
-{
-    std::vector<Move> legalMoves;
-    uint64_t          occupancy = board.getBitboards()[Occupied];
-    uint64_t          attacks   = magicBitboard.getQueenAttacks(occupancy, square);
-
-    attacks &= ~board.getBitboards()[isWhite ? OccupiedByWhite : OccupiedByBlack];
-
-    legalMoves.reserve(Bitboard::countBits(attacks));
-
-    while (attacks)
-    {
-        int            toSquare  = Bitboard::getLSB(attacks);
-        bool           isCapture = (occupancy & (1ULL << toSquare)) != 0;
-        Move::MoveType type      = isCapture ? Move::CAPTURE : Move::NORMAL;
-        legalMoves.emplace_back(Move{square, toSquare, type});
-        attacks &= attacks - 1;
-    }
-
-    return legalMoves;
-}
-
-void MoveGen::generateKnightAttackTable()
-{
-    constexpr std::array<int, 8> knightOffsets = {-17, -15, -10, -6, 6, 10, 15, 17};
-
-    for (int square = 0; square < 64; ++square)
-    {
-        uint64_t attacks = 0;
-
-        for (const int offset : knightOffsets)
+        if (file != (side ? FILE_H : FILE_A) && Bitboard::isSet(enemyOccupancy, CAPTURE_OFFSET_7))
         {
-            int targetSquare = square + offset;
-
-            if (targetSquare < 0 || targetSquare > 63) { continue; }
-
-            if (std::abs((targetSquare % 8) - (square % 8)) <= 2) { Bitboard::setBit(attacks, targetSquare); }
+            addPromotions(square, static_cast<Square>(CAPTURE_OFFSET_7), moves);
         }
-
-        knightTable[square] = attacks;
+        if (!Bitboard::isSet(occupancy, SINGLE_PUSH)) { addPromotions(square, static_cast<Square>(SINGLE_PUSH), moves); }
+        if (file != (side ? FILE_A : FILE_H) && Bitboard::isSet(enemyOccupancy, CAPTURE_OFFSET_9))
+        {
+            addPromotions(square, static_cast<Square>(CAPTURE_OFFSET_9), moves);
+        }
     }
 }
 
-void MoveGen::generateKingAttackTable()
+void MoveGen::generateRookMoves(const Position& position, Square square, Color side, std::vector<Move>& moves) const
 {
-    constexpr std::array<int, 8> knightOffsets = {-9, -8, -7, -1, 1, 7, 8, 9};
+    uint64_t occupancy = position.getPieceBitboard(ALL_PIECES);
+    uint64_t attacks   = AttackGenerator::getRookAttacks(occupancy, square);
 
-    for (int square = 0; square < 64; ++square)
+    attacks &= ~position.getPieceBitboard(ALL_PIECES, side);
+
+    moves.reserve(moves.size() + Bitboard::countBits(attacks));
+
+    while (attacks)
     {
-        uint64_t attacks = 0;
-
-        for (const int offset : knightOffsets)
-        {
-            int targetSquare = square + offset;
-
-            if (targetSquare < 0 || targetSquare > 63) { continue; }
-
-            if (std::abs((targetSquare % 8) - (square % 8)) <= 1) { Bitboard::setBit(attacks, targetSquare); }
-        }
-
-        kingTable[square] = attacks;
+        Square toSquare = static_cast<Square>(Bitboard::getLSB(attacks));
+        moves.emplace_back(square, toSquare);
+        attacks &= attacks - 1;
     }
+}
+
+void MoveGen::generateBishopMoves(const Position& position, Square square, Color side, std::vector<Move>& moves) const
+{
+    uint64_t occupancy = position.getPieceBitboard(ALL_PIECES);
+    uint64_t attacks   = AttackGenerator::getBishopAttacks(occupancy, square);
+
+    attacks &= ~position.getPieceBitboard(ALL_PIECES, side);
+
+    moves.reserve(moves.size() + Bitboard::countBits(attacks));
+
+    while (attacks)
+    {
+        Square toSquare = static_cast<Square>(Bitboard::getLSB(attacks));
+        moves.emplace_back(square, toSquare);
+        attacks &= attacks - 1;
+    }
+}
+
+void MoveGen::generateQueenMoves(const Position& position, Square square, Color side, std::vector<Move>& moves) const
+{
+    uint64_t occupancy = position.getPieceBitboard(ALL_PIECES);
+    uint64_t attacks   = AttackGenerator::getQueenAttacks(occupancy, square);
+
+    attacks &= ~position.getPieceBitboard(ALL_PIECES, side);
+
+    moves.reserve(moves.size() + Bitboard::countBits(attacks));
+
+    while (attacks)
+    {
+        Square toSquare = static_cast<Square>(Bitboard::getLSB(attacks));
+        moves.emplace_back(square, toSquare);
+        attacks &= attacks - 1;
+    }
+}
+
+void MoveGen::generateKnightMoves(const Position& position, Square square, Color side, std::vector<Move>& moves) const
+{
+    uint64_t attacks = AttackGenerator::getKnightAttacks(square);
+
+    attacks &= ~position.getPieceBitboard(ALL_PIECES, side);
+
+    moves.reserve(moves.size() + Bitboard::countBits(attacks));
+
+    while (attacks)
+    {
+        Square toSquare = static_cast<Square>(Bitboard::getLSB(attacks));
+        moves.emplace_back(square, toSquare);
+        attacks &= attacks - 1;
+    }
+}
+
+void MoveGen::generateKingMoves(const Position& position, Square square, Color side, std::vector<Move>& moves) const
+{
+    uint64_t attacks = AttackGenerator::getKingAttacks(square);
+
+    attacks &= ~position.getPieceBitboard(ALL_PIECES, side);
+
+    moves.reserve(moves.size() + Bitboard::countBits(attacks) + 2);
+
+    while (attacks)
+    {
+        Square toSquare = static_cast<Square>(Bitboard::getLSB(attacks));
+        moves.emplace_back(square, toSquare);
+        attacks &= attacks - 1;
+    }
+
+    if (position.canCastle(side ? BLACK_OO : WHITE_OO)) { moves.emplace_back(square, side ? G8 : G1, Move::CASTLING); }
+    if (position.canCastle(side ? BLACK_OOO : WHITE_OOO)) { moves.emplace_back(square, side ? C8 : C1, Move::CASTLING); }
 }

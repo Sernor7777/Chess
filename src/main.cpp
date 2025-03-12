@@ -1,3 +1,4 @@
+#include <SFML/Audio.hpp>
 #include <SFML/Graphics.hpp>
 #include <string>
 #include <iostream>
@@ -5,27 +6,40 @@
 #include "config.hpp"
 #include "texture_loader.hpp"
 #include "events.hpp"
-#include "board.hpp"
-#include "piece.hpp"
 #include "magic_bitboard.hpp"
+#include "sound_manager.hpp"
+#include "attack_generator.hpp"
+#include "chess_gui.hpp"
+#include "perft.hpp"
+#include "position.hpp"
+
+#include <thread>
+#include <chrono>
+#include <cassert>
+#include <filesystem>
 
 int main()
 {
-    TextureLoader textureLoader;
-    Board         board(textureLoader);
-    // board.readFEN("5r2/3R4/6pk/1r5p/3P1B2/4P1P1/5P1P/1N3RK1");
+    AttackGenerator::initialize();
 
-    sf::RenderWindow window(sf::VideoMode(config::WINDOW_WIDTH, config::WINDOW_HEIGHT), "Chess");
-    window.setFramerateLimit(60);
+    // auto start = std::chrono::high_resolution_clock::now();
 
-    while (window.isOpen())
-    {
-        processEvents(window, board);
+    // std::vector<Move> moves;
+    // std::cout << "Perft result: " << Perft::perft(position, 6, moves) << '\n';
 
-        window.clear();
+    // Perft::runPerftTests();
 
-        board.displayBoard(window, textureLoader);
+    // auto                          end      = std::chrono::high_resolution_clock::now();
+    // std::chrono::duration<double> duration = end - start;
+    // std::cout << "Time taken: " << duration.count() << " seconds" << std::endl;
 
-        window.display();
-    }
+    Position position;
+
+    Engine engine;
+    // position.loadFen("rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 1 8");
+    // engine.setPosition(position);
+
+    ChessGUI chessGUI(engine);
+
+    return 0;
 }

@@ -4,3 +4,7 @@ out
 .idea
 .vs
 .vscode
+bitboard_visualizer.cpp
+bitboard_visualizer.exe
+move_visualizer.cpp
+move_visualizer.exe

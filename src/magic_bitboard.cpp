@@ -1,6 +1,9 @@
 #include "magic_bitboard.hpp"
+
 #include <unordered_map>
 #include <iostream>
+
+#include "types.hpp"
 
 const std::array<uint64_t, 64> MagicBitboard::ROOK_MAGIC_NUMBERS = {
     0x80004000208011ULL,   0x2100102100804000ULL, 0x80200080100008ULL,   0x680061000800800ULL,  0x200100200082004ULL,
@@ -47,113 +50,9 @@ MagicBitboard::MagicBitboard()
     generateBishopAttackTable();
 }
 
-uint64_t MagicBitboard::getRookAttacks(uint64_t occupancy, int square) const
-{
-    uint64_t index = generateRookMagicIndex(occupancy, square);
-
-    return rookTable[square].attacks[index];
-}
-
-uint64_t MagicBitboard::getBishopAttacks(uint64_t occupancy, int square) const
-{
-    uint64_t index = generateBishopMagicIndex(occupancy, square);
-
-    return bishopTable[square].attacks[index];
-}
-
-uint64_t MagicBitboard::getQueenAttacks(uint64_t occupancy, int square) const
-{
-    uint64_t rookIndex   = generateRookMagicIndex(occupancy, square);
-    uint64_t bishopIndex = generateBishopMagicIndex(occupancy, square);
-
-    return bishopTable[square].attacks[bishopIndex] | rookTable[square].attacks[rookIndex];
-}
-
-uint64_t MagicBitboard::calculateRookMask(int square) const
-{
-    uint64_t mask = 0ULL;
-    int      file = square % 8;
-    int      rank = square / 8;
-
-    for (int f = file + 1; f < 7; ++f)
-    {
-        Bitboard::setBit(mask, (rank * 8) + f);
-    }
-
-    for (int f = file - 1; f > 0; --f)
-    {
-        Bitboard::setBit(mask, (rank * 8) + f);
-    }
-
-    for (int r = rank + 1; r < 7; ++r)
-    {
-        Bitboard::setBit(mask, (r * 8) + file);
-    }
-
-    for (int r = rank - 1; r > 0; --r)
-    {
-        Bitboard::setBit(mask, (r * 8) + file);
-    }
-
-    return mask;
-}
-
-uint64_t MagicBitboard::calculateRookAttacks(uint64_t blockers, int square) const
-{
-    uint64_t attacks = 0ULL;
-    int      file    = square % 8;
-    int      rank    = square / 8;
-
-    for (int f = file + 1; f <= 7; ++f)
-    {
-        int sq = (rank * 8) + f;
-        Bitboard::setBit(attacks, sq);
-        if ((1ULL << sq) & blockers) { break; }
-    }
-
-    for (int f = file - 1; f >= 0; --f)
-    {
-        int sq = (rank * 8) + f;
-        Bitboard::setBit(attacks, sq);
-        if ((1ULL << sq) & blockers) { break; }
-    }
-
-    for (int r = rank + 1; r <= 7; ++r)
-    {
-        int sq = (r * 8) + file;
-        Bitboard::setBit(attacks, sq);
-        if ((1ULL << sq) & blockers) { break; }
-    }
-
-    for (int r = rank - 1; r >= 0; --r)
-    {
-        int sq = (r * 8) + file;
-        Bitboard::setBit(attacks, sq);
-        if ((1ULL << sq) & blockers) { break; }
-    }
-
-    return attacks;
-}
-
-std::vector<uint64_t> MagicBitboard::generateBlockerBitboards(uint64_t mask) const
-{
-    std::vector<uint64_t> blockers;
-    uint64_t              subset = 0ULL;
-
-    blockers.reserve(1ULL << Bitboard::countBits(mask));
-
-    do
-    {
-        blockers.push_back(subset);
-        subset = (subset - mask) & mask;
-    } while (subset);
-
-    return blockers;
-}
-
 void MagicBitboard::generateRookAttackTable()
 {
-    for (int square = 0; square < 64; ++square)
+    for (int square = A1; square < SQUARE_NB; ++square)
     {
         uint64_t mask = calculateRookMask(square);
 
@@ -174,7 +73,7 @@ void MagicBitboard::generateRookAttackTable()
 
 void MagicBitboard::generateBishopAttackTable()
 {
-    for (int square = 0; square < 64; ++square)
+    for (int square = A1; square < SQUARE_NB; ++square)
     {
         uint64_t mask = calculateBishopMask(square);
 
@@ -193,14 +92,41 @@ void MagicBitboard::generateBishopAttackTable()
     }
 }
 
-uint64_t MagicBitboard::generateRookMagicIndex(uint64_t occupancy, int square) const
+uint64_t MagicBitboard::calculateRookAttacks(uint64_t blockers, int square) const
 {
-    return ((occupancy & rookTable[square].mask) * rookTable[square].magic) >> rookTable[square].shift;
-}
+    uint64_t attacks = 0ULL;
+    int      file    = square % 8;
+    int      rank    = square / 8;
 
-uint64_t MagicBitboard::generateBishopMagicIndex(uint64_t occupancy, int square) const
-{
-    return ((occupancy & bishopTable[square].mask) * bishopTable[square].magic) >> bishopTable[square].shift;
+    for (int f = file + 1; f < FILE_NB; ++f)
+    {
+        int sq = (rank * 8) + f;
+        Bitboard::setBit(attacks, sq);
+        if ((1ULL << sq) & blockers) { break; }
+    }
+
+    for (int f = file - 1; f >= FILE_A; --f)
+    {
+        int sq = (rank * 8) + f;
+        Bitboard::setBit(attacks, sq);
+        if ((1ULL << sq) & blockers) { break; }
+    }
+
+    for (int r = rank + 1; r < RANK_NB; ++r)
+    {
+        int sq = (r * 8) + file;
+        Bitboard::setBit(attacks, sq);
+        if ((1ULL << sq) & blockers) { break; }
+    }
+
+    for (int r = rank - 1; r >= RANK_1; --r)
+    {
+        int sq = (r * 8) + file;
+        Bitboard::setBit(attacks, sq);
+        if ((1ULL << sq) & blockers) { break; }
+    }
+
+    return attacks;
 }
 
 uint64_t MagicBitboard::calculateBishopAttacks(uint64_t blockers, int square) const
@@ -209,28 +135,28 @@ uint64_t MagicBitboard::calculateBishopAttacks(uint64_t blockers, int square) co
     int      file    = square % 8;
     int      rank    = square / 8;
 
-    for (int f = file + 1, r = rank + 1; f <= 7 && r <= 7; ++f, ++r)
+    for (int f = file + 1, r = rank + 1; f < FILE_NB && r < RANK_NB; ++f, ++r)
     {
         int sq = (r * 8) + f;
         Bitboard::setBit(attacks, sq);
         if ((1ULL << sq) & blockers) { break; }
     }
 
-    for (int f = file + 1, r = rank - 1; f <= 7 && r >= 0; ++f, --r)
+    for (int f = file + 1, r = rank - 1; f < FILE_NB && r >= RANK_1; ++f, --r)
     {
         int sq = (r * 8) + f;
         Bitboard::setBit(attacks, sq);
         if ((1ULL << sq) & blockers) { break; }
     }
 
-    for (int f = file - 1, r = rank + 1; f >= 0 && r <= 7; --f, ++r)
+    for (int f = file - 1, r = rank + 1; f >= FILE_A && r < RANK_NB; --f, ++r)
     {
         int sq = (r * 8) + f;
         Bitboard::setBit(attacks, sq);
         if ((1ULL << sq) & blockers) { break; }
     }
 
-    for (int f = file - 1, r = rank - 1; f >= 0 && r >= 0; --f, --r)
+    for (int f = file - 1, r = rank - 1; f >= FILE_A && r >= RANK_1; --f, --r)
     {
         int sq = (r * 8) + f;
         Bitboard::setBit(attacks, sq);
@@ -240,31 +166,77 @@ uint64_t MagicBitboard::calculateBishopAttacks(uint64_t blockers, int square) co
     return attacks;
 }
 
+uint64_t MagicBitboard::calculateRookMask(int square) const
+{
+    uint64_t mask = 0ULL;
+    int      file = square % 8;
+    int      rank = square / 8;
+
+    for (int f = file + 1; f < FILE_H; ++f)
+    {
+        Bitboard::setBit(mask, (rank * 8) + f);
+    }
+
+    for (int f = file - 1; f > FILE_A; --f)
+    {
+        Bitboard::setBit(mask, (rank * 8) + f);
+    }
+
+    for (int r = rank + 1; r < RANK_8; ++r)
+    {
+        Bitboard::setBit(mask, (r * 8) + file);
+    }
+
+    for (int r = rank - 1; r > RANK_1; --r)
+    {
+        Bitboard::setBit(mask, (r * 8) + file);
+    }
+
+    return mask;
+}
+
 uint64_t MagicBitboard::calculateBishopMask(int square) const
 {
     uint64_t mask = 0ULL;
     int      file = square % 8;
     int      rank = square / 8;
 
-    for (int f = file + 1, r = rank + 1; f < 7 && r < 7; ++f, ++r)
+    for (int f = file + 1, r = rank + 1; f < FILE_H && r < RANK_8; ++f, ++r)
     {
         Bitboard::setBit(mask, (r * 8) + f);
     }
 
-    for (int f = file + 1, r = rank - 1; f < 7 && r > 0; ++f, --r)
+    for (int f = file + 1, r = rank - 1; f < FILE_H && r > RANK_1; ++f, --r)
     {
         Bitboard::setBit(mask, (r * 8) + f);
     }
 
-    for (int f = file - 1, r = rank + 1; f > 0 && r < 7; --f, ++r)
+    for (int f = file - 1, r = rank + 1; f > FILE_A && r < RANK_8; --f, ++r)
     {
         Bitboard::setBit(mask, (r * 8) + f);
     }
 
-    for (int f = file - 1, r = rank - 1; f > 0 && r > 0; --f, --r)
+    for (int f = file - 1, r = rank - 1; f > FILE_A && r > RANK_1; --f, --r)
     {
         Bitboard::setBit(mask, (r * 8) + f);
     }
 
     return mask;
+}
+
+std::vector<uint64_t> MagicBitboard::generateBlockerBitboards(uint64_t mask) const
+{
+    std::vector<uint64_t> blockers;
+    uint64_t              subset = 0ULL;
+
+    blockers.reserve(1ULL << Bitboard::countBits(mask));
+
+    // Using a Carry-Rippler trick to generate all subsets of a bitmask
+    do
+    {
+        blockers.push_back(subset);
+        subset = (subset - mask) & mask;
+    } while (subset);
+
+    return blockers;
 }

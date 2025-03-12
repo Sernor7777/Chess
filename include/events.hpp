@@ -1,6 +1,10 @@
 #pragma once
 
 #include <SFML/Window.hpp>
-#include "board.hpp"
 
-void processEvents(sf::RenderWindow& window, Board& board);
+#include "chess_gui.hpp"
+
+namespace Events
+{
+void processEvents(sf::RenderWindow& window, ChessGUI& chessGUI);  //, Board& board);
+}  // namespace events
