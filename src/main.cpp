@@ -1,22 +1,11 @@
-#include <SFML/Audio.hpp>
-#include <SFML/Graphics.hpp>
-#include <string>
 #include <iostream>
+#include <chrono>
 
-#include "config.hpp"
-#include "texture_loader.hpp"
-#include "events.hpp"
-#include "magic_bitboard.hpp"
-#include "sound_manager.hpp"
 #include "attack_generator.hpp"
 #include "chess_gui.hpp"
 #include "perft.hpp"
 #include "position.hpp"
 
-#include <thread>
-#include <chrono>
-#include <cassert>
-#include <filesystem>
 
 int main()
 {
