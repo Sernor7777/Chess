@@ -25,7 +25,6 @@ void Engine::generateAllLegalMoves()
 {
     legalMoves.clear();
     std::array<Piece, SQUARE_NB> board = position.getBoard();
-    ;
 
     uint64_t piecesBitboard = position.getPieceBitboard(ALL_PIECES);
     while (piecesBitboard)
