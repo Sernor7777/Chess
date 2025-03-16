@@ -2,6 +2,7 @@
 
 #include <sstream>
 #include <iostream>
+#include <algorithm>
 #include <cassert>
 
 #include "bitboard.hpp"
@@ -92,7 +93,7 @@ bool Position::canCastle(CastlingRights castlingRight) const
     }
 }
 
-bool Position::isLegal(Move move)
+bool Position::isLegal(Move move, StateInfo& newState)
 {
     if (move.type() == Move::CASTLING)
     {
@@ -112,8 +113,6 @@ bool Position::isLegal(Move move)
 
         return true;
     }
-
-    StateInfo newState;
     makeMove(move, newState);
 
     bool isLegal =
@@ -121,6 +120,18 @@ bool Position::isLegal(Move move)
                           static_cast<Color>(sideToMove));
     undoMove();
     return isLegal;
+}
+
+void Position::filterLegalMoves(std::vector<Move>& moves)
+{
+    StateInfo newState;
+
+    moves.erase(std::remove_if(moves.begin(), moves.end(),
+                               [this, &newState](const Move move) {
+                                   newState = {};
+                                   return !isLegal(move, newState);
+                               }),
+                moves.end());
 }
 
 void Position::makeMove(Move move, StateInfo& newState)
@@ -168,6 +179,8 @@ void Position::makeMove(Move move, StateInfo& newState)
 
         movePiece(rookFrom, rookTo, sideToMove);
         movePiece(move.from(), move.to(), sideToMove);
+
+        newState.castlingRights &= static_cast<CastlingRights>(sideToMove ? WHITE_OO | WHITE_OOO : BLACK_OO | BLACK_OOO);
     }
     else if (move.type() == Move::EN_PASSANT)
     {

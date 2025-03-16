@@ -9,9 +9,9 @@ void Engine::run() { generateAllLegalMoves(); }
 void Engine::makeMove(const Move move)
 {
     StateInfo state;
+
     position.makeMove(move, state);
     generateAllLegalMoves();
-    position.printFen();
 }
 
 void Engine::undoMove() { position.undoMove(); }
@@ -71,7 +71,5 @@ void Engine::generateAllLegalMoves()
         piecesBitboard &= piecesBitboard - 1;
     }
 
-    legalMoves.erase(
-        std::remove_if(legalMoves.begin(), legalMoves.end(), [this](const Move move) { return !position.isLegal(move); }),
-        legalMoves.end());
+    position.filterLegalMoves(legalMoves);
 }

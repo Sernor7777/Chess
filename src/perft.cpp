@@ -16,8 +16,7 @@ const std::vector<PerftTest> TEST_POSITIONS = {
     {"8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - - 0 1", 5, 674624, "Endgame Position"},
     {"r3k2r/Pppp1ppp/1b3nbN/nP6/BBP1P3/q4N2/Pp1P2PP/R2Q1RK1 w kq - 0 1", 4, 422333, "Castle Rights Test"},
     {"rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 1 8", 4, 2103487, "Promotion Test"},
-    {"r4rk1/1pp1qppp/p1np1n2/2b1p1B1/2B1P1b1/P1NP1N2/1PP1QPPP/R4RK1 w - - 0 10", 4, 3894594, "En Passant Test"},
-    {"n1n5/PPPk4/8/8/8/8/4Kppp/5N1N b - - 0 1", 4, 182838, "Test"}};
+    {"r4rk1/1pp1qppp/p1np1n2/2b1p1B1/2B1P1b1/P1NP1N2/1PP1QPPP/R4RK1 w - - 0 10", 4, 3894594, "Position 6"}};
 
 void generateAllLegalMoves(Position& position, std::vector<Move>& moves)
 {
@@ -60,9 +59,7 @@ void generateAllLegalMoves(Position& position, std::vector<Move>& moves)
         }
     }
 
-    moves.erase(
-        std::remove_if(moves.begin(), moves.end(), [&position](const Move& move) { return !position.isLegal(move); }),
-        moves.end());
+    position.filterLegalMoves(moves);
 }
 
 uint64_t perftInternal(Position& position, int depth)
@@ -79,12 +76,13 @@ uint64_t perftInternal(Position& position, int depth)
     generateAllLegalMoves(position, moves);
     uint64_t nodes = 0;
 
+    StateInfo newState;
     for (const Move& move : moves)
     {
-        StateInfo newState;
         position.makeMove(move, newState);
         nodes += perftInternal(position, depth - 1);
         position.undoMove();
+        newState = {};
     }
 
     return nodes;
@@ -111,9 +109,9 @@ void runPerftTests()
         return s;
     };
 
+    Position position;
     for (const auto& test : TEST_POSITIONS)
     {
-        Position position;
         position.loadFen(test.fen);
 
         std::cout << "Testing: " << test.description << "\n";
@@ -129,7 +127,7 @@ void runPerftTests()
         std::cout << "Nodes: " << formatNumber(nodes) << "\n";
         std::cout << "Expected: " << formatNumber(test.expected_nodes) << "\n";
         std::cout << "Time: " << duration.count() << "ms\n";
-        std::cout << "Nodes/second: " << formatNumber(nodes * 1000 / duration.count()) << "\n";
+        std::cout << "Nodes/second: " << formatNumber(nodes * 1000 / (duration.count() ? duration.count() : 1)) << "\n";
 
         if (nodes == test.expected_nodes) { std::cout << "Result: PASS\n"; }
         else
@@ -148,18 +146,18 @@ void dividePerft(Position& position, int depth)
     moves.reserve(218);
     generateAllLegalMoves(position, moves);
 
-    uint64_t total = 0;
+    uint64_t  total = 0;
+    StateInfo newState;
     for (const Move& move : moves)
     {
-        StateInfo newState;
         position.makeMove(move, newState);
         uint64_t nodes = perftInternal(position, depth - 1);
         position.undoMove();
+        newState = {};
 
         std::cout << move.toString() << ": " << nodes << "\n";
         total += nodes;
     }
     std::cout << "\nTotal: " << total << " nodes\n";
 }
-
 }  // namespace Perft

@@ -17,7 +17,6 @@ int main()
     // auto start = std::chrono::high_resolution_clock::now();
 
     // std::vector<Move> moves;
-    // std::cout << "Perft result: " << Perft::perft(position, 6, moves) << '\n';
 
     // Perft::runPerftTests();
 
@@ -26,7 +25,7 @@ int main()
     // std::cout << "Time taken: " << duration.count() << " seconds" << std::endl;
 
     Engine engine;
-    // position.loadFen("r3k2r/Pppp1ppp/1b3nbN/nP6/BBP1P3/q4N2/Pp1P2PP/R2Q1RK1 w kq - 0 1");
+    // position.loadFen("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1");
     // engine.setPosition(position);
 
     ChessGUI chessGUI(engine);

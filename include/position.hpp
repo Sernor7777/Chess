@@ -48,7 +48,7 @@ public:
     void makeMove(Move move, StateInfo& newState);
     void undoMove();
 
-    bool isLegal(Move move);
+    bool isLegal(Move move, StateInfo& newState);
     void filterLegalMoves(std::vector<Move>& moves);
 
     bool canCastle(CastlingRights castlingRight) const;
