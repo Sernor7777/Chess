@@ -103,21 +103,29 @@ bool Position::isLegal(Move move, StateInfo& newState)
             return false;
         }
 
-        int    direction   = (move.to() > move.from()) ? 1 : -1;
-        Square passThrough = static_cast<Square>(move.from() + direction);
+        Square from = move.from();
+        Square to   = move.to();
+
+        int    direction   = (to > from) ? 1 : -1;
+        Square passThrough = static_cast<Square>(from + direction);
 
         if (isSquareAttacked(passThrough, static_cast<Color>(1 - sideToMove))) { return false; }
 
-        Square to = move.to();
         if (isSquareAttacked(to, static_cast<Color>(1 - sideToMove))) { return false; }
-
         return true;
     }
+
+    if (board[move.from()] == (sideToMove ? WHITE_KING : BLACK_KING))
+    {
+        return !isSquareAttacked(static_cast<Square>(move.to()), static_cast<Color>(1 - sideToMove));
+    }
+
     makeMove(move, newState);
 
     bool isLegal =
         !isSquareAttacked(static_cast<Square>(Bitboard::getLSB(piecesBitboards[KING] & colorBitboards[1 - sideToMove])),
                           static_cast<Color>(sideToMove));
+
     undoMove();
     return isLegal;
 }
@@ -136,9 +144,8 @@ void Position::filterLegalMoves(std::vector<Move>& moves)
 
 void Position::makeMove(Move move, StateInfo& newState)
 {
-    newState.castlingRights  = stateHistory.back().castlingRights;
-    newState.enPassantSquare = SQ_NONE;  // Possibly change this so that the struct automatically initializes this anyway
-    newState.rule50          = ++stateHistory.back().rule50;
+    newState.castlingRights = stateHistory.back().castlingRights;
+    newState.rule50         = ++stateHistory.back().rule50;
 
     Piece     boardPiece = board[move.from()];
     PieceType pieceType  = static_cast<PieceType>(boardPiece - 6 * sideToMove);
