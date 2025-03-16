@@ -5,11 +5,14 @@
 #include "chess_gui.hpp"
 #include "perft.hpp"
 #include "position.hpp"
+#include "types.hpp"
 
 
 int main()
 {
     AttackGenerator::initialize();
+
+    // Position position;
 
     // auto start = std::chrono::high_resolution_clock::now();
 
@@ -22,10 +25,8 @@ int main()
     // std::chrono::duration<double> duration = end - start;
     // std::cout << "Time taken: " << duration.count() << " seconds" << std::endl;
 
-    Position position;
-
     Engine engine;
-    // position.loadFen("rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 1 8");
+    // position.loadFen("r3k2r/Pppp1ppp/1b3nbN/nP6/BBP1P3/q4N2/Pp1P2PP/R2Q1RK1 w kq - 0 1");
     // engine.setPosition(position);
 
     ChessGUI chessGUI(engine);

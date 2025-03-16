@@ -11,6 +11,7 @@ void Engine::makeMove(const Move move)
     StateInfo state;
     position.makeMove(move, state);
     generateAllLegalMoves();
+    position.printFen();
 }
 
 void Engine::undoMove() { position.undoMove(); }

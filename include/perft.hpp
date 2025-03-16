@@ -29,5 +29,4 @@ void runPerftTests();
 void dividePerft(Position& position, int depth);
 
 extern const std::vector<PerftTest> TEST_POSITIONS;
-
 }  // namespace Perft

@@ -125,6 +125,7 @@ void ChessGUI::handleInput(sf::RenderWindow& window, sf::Event& event)
             {
                 engine.makeMove(move);
                 legalMoves = engine.getLegalMoves();
+                break;
             }
         }
 

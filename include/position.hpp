@@ -4,6 +4,8 @@
 #include <string>
 #include <array>
 #include <forward_list>
+#include <deque>
+#include <vector>
 
 #include "bitboard.hpp"
 #include "types.hpp"
@@ -47,24 +49,27 @@ public:
     void undoMove();
 
     bool isLegal(Move move);
+    void filterLegalMoves(std::vector<Move>& moves);
 
     bool canCastle(CastlingRights castlingRight) const;
 
     uint64_t getPieceBitboard(int type) const { return piecesBitboards[type]; }
     uint64_t getPieceBitboard(PieceType type, Color color) const { return piecesBitboards[type] & colorBitboards[color]; }
 
-    Square                       getEnPassantSquare() const { return stateHistory.front().enPassantSquare; }
+    Square                       getEnPassantSquare() const { return stateHistory.back().enPassantSquare; }
     std::array<Piece, SQUARE_NB> getBoard() const { return board; }
     Color                        getSideToMove() const { return sideToMove; }
     // bool isRepeatedPosition() const; Will add Zobrist hashing in the future
+
+    void printFen();
 
 private:
     std::array<uint64_t, PIECE_TYPE_NB> piecesBitboards;
     std::array<uint64_t, COLOR_NB>      colorBitboards;
     std::array<Piece, SQUARE_NB>        board;
 
-    std::forward_list<StateInfo> stateHistory;
-    std::forward_list<Move>      moveHistory;
+    std::deque<StateInfo> stateHistory;
+    std::deque<Move>      moveHistory;
 
     Color sideToMove;
     // int ply = 0; Could use this in the future to count moves

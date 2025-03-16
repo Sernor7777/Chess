@@ -105,6 +105,7 @@ public:
     constexpr MoveType  type() const { return static_cast<MoveType>(data & (3 << 12)); }
     constexpr PieceType promotionPiece() const
     {
+        PieceType pieceType = static_cast<PieceType>((data >> 14) + 2);
         return (type() == PROMOTION) ? static_cast<PieceType>((data >> 14) + 2) : NO_TYPE;
     }
 
@@ -116,7 +117,7 @@ public:
             "a5", "b5", "c5", "d5", "e5", "f5", "g5", "h5", "a6", "b6", "c6", "d6", "e6", "f6", "g6", "h6",
             "a7", "b7", "c7", "d7", "e7", "f7", "g7", "h7", "a8", "b8", "c8", "d8", "e8", "f8", "g8", "h8"};
 
-        static const char* const PROMOTION_PIECES = "rbnq";
+        static const char* const PROMOTION_PIECES = "rnbq";
 
         std::string moveStr;
 

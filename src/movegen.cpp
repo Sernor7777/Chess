@@ -50,10 +50,10 @@ void MoveGen::generatePawnMoves(const Position& position, Square square, Color s
     else
     {
         auto addPromotions = [](Square square, Square to, std::vector<Move>& moves) {
+            moves.emplace_back(square, to, Move::PROMOTION, QUEEN);
             moves.emplace_back(square, to, Move::PROMOTION, ROOK);
             moves.emplace_back(square, to, Move::PROMOTION, KNIGHT);
             moves.emplace_back(square, to, Move::PROMOTION, BISHOP);
-            moves.emplace_back(square, to, Move::PROMOTION, QUEEN);
         };
 
         if (file != (side ? FILE_H : FILE_A) && Bitboard::isSet(enemyOccupancy, CAPTURE_OFFSET_7))
